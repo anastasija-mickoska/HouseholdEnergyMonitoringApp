@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import CustomForm from './components/CustomForm'; 
-import RegisterIcon from '../assets/images/login.svg'; 
+import RegisterIcon from '../assets/images/login.png'; 
 
 const Register = () => {
   const fields = [

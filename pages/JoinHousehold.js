@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import CustomForm from './components/CustomForm'; 
-import JoinIcon from '../assets/images/add.svg'; 
+import JoinIcon from '../assets/images/add.png'; 
+import PageLayout from '../components/PageLayout.js';
 
 const JoinHousehold = () => {
   const fields = [
@@ -9,15 +10,17 @@ const JoinHousehold = () => {
   ];
 
   return (
-    <View styles={styles.container}>
-      <CustomForm
-        title="Join household"
-        registerQuestion={false}
-        fields={fields}
-        buttonText="Join"
-        buttonIcon={<JoinIcon width={25} height={25} />} 
-      />
-    </View>
+    <PageLayout navigation={navigation}>
+      <View styles={styles.container}>
+        <CustomForm
+          title="Join household"
+          registerQuestion={false}
+          fields={fields}
+          buttonText="Join"
+          buttonIcon={<JoinIcon width={25} height={25} />} 
+        />
+      </View>
+    </PageLayout>
   );
 };
 

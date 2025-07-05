@@ -1,5 +1,6 @@
-import AddIcon from '../assets/images/add.svg';
+import AddIcon from '../assets/images/add.png';
 import { LinearGradient } from 'expo-linear-gradient';
+import PageLayout from '../components/PageLayout.js';
 
 const WelcomePage = () => {
 
@@ -8,24 +9,26 @@ const WelcomePage = () => {
     }
 
     return(
-        <View style={styles.container}>
-            <Text style={styles.welcome}>Welcome, *NAME OF THE USER*!</Text>
-            <View style={styles.view}>
-                <Text styles={styles.viewText}>
-                    You are not part of a household yet.
-                </Text>
+        <PageLayout navigation={navigation}>
+            <View style={styles.container}>
+                <Text style={styles.welcome}>Welcome, *NAME OF THE USER*!</Text>
+                <View style={styles.view}>
+                    <Text styles={styles.viewText}>
+                        You are not part of a household yet.
+                    </Text>
+                </View>
+                <TouchableOpacity style={styles.button} onPress={handlePress}>
+                    <LinearGradient
+                        colors={['#4ADEDE', '#1AA7EC']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.button}>
+                        <Text style={styles.buttonText}>Create/Join household</Text>
+                        <Image source={require({AddIcon})}/>
+                    </LinearGradient>
+                </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.button} onPress={handlePress}>
-                <LinearGradient
-                    colors={['#4ADEDE', '#1AA7EC']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.button}>
-                    <Text style={styles.buttonText}>Create/Join household</Text>
-                    <Image source={require({AddIcon})}/>
-                </LinearGradient>
-            </TouchableOpacity>
-        </View>
+        </PageLayout>
     );
 }
 
