@@ -13,10 +13,29 @@ import WelcomePage from '../pages/WelcomePage.js';
 import Login from '../pages/Login.js';
 import Register from '../pages/Register.js';
 import { NavigationContainer } from '@react-navigation/native';
+import * as Font from 'expo-font';
+import AppLoading from 'expo-app-loading';
+import { useState } from 'react-native';
 
+const fetchFonts = () => {
+  return Font.loadAsync({
+    'Roboto Flex': require('./assets/RobotoFlex.ttf'),
+  });
+};
 const Stack = createNativeStackNavigator();
 
-const StackNavigator = () => {
+const App = () => {
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  if (!fontsLoaded) {
+    return (
+      <AppLoading
+        startAsync={fetchFonts}
+        onFinish={() => setFontsLoaded(true)}
+        onError={console.warn}
+      />
+    );
+  }
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -37,4 +56,4 @@ const StackNavigator = () => {
   );
 };
 
-export default StackNavigator;
+export default App;
