@@ -1,8 +1,7 @@
-import AddIcon from '../assets/images/add.png';
 import { LinearGradient } from 'expo-linear-gradient';
 import PageLayout from '../components/PageLayout.js';
 
-const WelcomePage = () => {
+const WelcomePage = ({navigation}) => {
 
     const handlePress = () => {
         //navigate to other page
@@ -24,7 +23,7 @@ const WelcomePage = () => {
                         end={{ x: 1, y: 0 }}
                         style={styles.button}>
                         <Text style={styles.buttonText}>Create/Join household</Text>
-                        <Image source={require({AddIcon})}/>
+                        <Image source={require('../assets/images/add.png')}/>
                     </LinearGradient>
                 </TouchableOpacity>
             </View>
