@@ -43,14 +43,14 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 12,
         fontFamily: 'Roboto Flex',
-        fontWeight: 500,
+        fontWeight: '500',
         letterSpacing: 0.6
     },    
     limitNumber: {
         color: '#FFFFFF',
         fontSize: 12,
         fontFamily: 'Roboto Flex',
-        fontWeight: 600,
+        fontWeight: '600',
         letterSpacing: 0.8
     },
     icon: {

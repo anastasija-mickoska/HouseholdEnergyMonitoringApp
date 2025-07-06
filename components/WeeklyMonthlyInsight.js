@@ -23,7 +23,7 @@ const styles=StyleSheet.create({
         color: '#1F2F98',
         fontSize: 24,
         fontFamily: 'Roboto Flex',
-        fontWeight: 600,
+        fontWeight: '600',
         letterSpacing: 1.2
     }
 });

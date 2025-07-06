@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import CustomForm from './components/CustomForm'; 
 import RegisterIcon from '../assets/images/login.png'; 
 
-const Register = () => {
+const Register = ({navigation}) => {
   const fields = [
     { name: 'email', label: 'Email', type: 'email', required: true},
     { name: 'name', label: "Name", type: 'text', required: true},

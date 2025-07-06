@@ -32,7 +32,7 @@ const styles=StyleSheet.create({
         color: '#1F2F98',
         fontSize: 12,
         fontFamily: 'Roboto Flex',
-        fontWeight: 400,
+        fontWeight: '400',
         lineHeight: 20,
         letterSpacing: 0.6
     },
@@ -40,7 +40,7 @@ const styles=StyleSheet.create({
         color: 'rgba(0, 0, 0, 0.50)',
         fontSize: 10,
         fontFamily: 'Roboto Flex',
-        fontWeight: 400,
+        fontWeight: '400',
         letterSpacing: 0.5
     }
 })

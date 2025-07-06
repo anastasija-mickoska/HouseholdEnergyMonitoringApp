@@ -1,9 +1,8 @@
 import { StyleSheet, View } from 'react-native';
 import CustomForm from './components/CustomForm'; 
-import CreateIcon from '../assets/images/add.png'; 
 import PageLayout from '../components/PageLayout.js';
 
-const CreateHousehold = () => {
+const CreateHousehold = ({navigation}) => {
   const fields = [
     { name: 'householdName', label: 'Household Name', type: 'text', placeholder: "Enter household name...", required: true },
     { name: 'address', label: 'Address', type: 'text', placeholder: "Enter address...", required: true },
@@ -12,13 +11,13 @@ const CreateHousehold = () => {
 
   return (
     <PageLayout navigation={navigation}>
-      <View styles={styles.container}>
+      <View style={styles.container}>
         <CustomForm
           title="Create household"
           registerQuestion={false}
           fields={fields}
-          buttonText="Create"
-          buttonIcon={<CreateIcon width={25} height={25} />} 
+          buttonText={"Create"}
+          buttonIcon={'../assets/images/add.png'} 
         />
       </View>
     </PageLayout>

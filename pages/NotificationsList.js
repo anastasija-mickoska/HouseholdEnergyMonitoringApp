@@ -1,5 +1,6 @@
 import { ScrollView } from "react-native-gesture-handler";
 import PageLayout from "../components/PageLayout";
+import {View, StyleSheet, Text} from 'react-native';
 
 const NotificationsList = ({navigation, notifications}) => {
     return(
@@ -28,7 +29,7 @@ const styles = StyleSheet.create({
         color: '#1F2F98',
         fontSize: 32,
         fontFamily: 'Roboto Flex',
-        fontWeight: 700,
+        fontWeight: '700',
         letterSpacing: 1.6
     }
 });

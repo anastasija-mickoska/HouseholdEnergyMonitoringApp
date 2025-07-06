@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
     color: '#F3F3F3',
     fontSize: 16,
     fontFamily: 'Roboto Flex',
-    fontWeight: 500,
+    fontWeight: '500',
     letterSpacing: 0.80
   },
 });

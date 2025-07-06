@@ -36,7 +36,7 @@ const styles=StyleSheet.create({
         color: '#1F2F98',
         fontSize: 24,
         fontFamily: 'Roboto Flex',
-        fontWeight: 600,
+        fontWeight: '600',
         letterSpacing: 1.2
     },
     usage: {
@@ -53,14 +53,14 @@ const styles=StyleSheet.create({
         color: '#F3F3F3',
         fontSize: 16,
         fontFamily: 'Roboto Flex',
-        fontWeight: 700,
+        fontWeight: '700',
         letterSpacing: 0.8
     },
     number: {
         color: '#FFFFFF',
         fontSize: 24,
         fontFamily: 'Roboto Flex',
-        fontWeight: 600,
+        fontWeight: '600',
         letterSpacing: 1.2
     }
 });

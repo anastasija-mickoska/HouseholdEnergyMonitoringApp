@@ -1,5 +1,6 @@
-import { TouchableOpacity } from "react-native";
+import { TouchableOpacity, StyleSheet, Text, Image } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
+import { LinearGradient } from "react-native-svg";
 
 const UsageLimits = ({weeklyLimit, monthlyLimit, handleSave}) => {
     return (
@@ -32,7 +33,7 @@ const styles = StyleSheet.create({
         color: '#1F2F98',
         fontSize: 12,
         fontFamily: 'Roboto Flex',
-        fontWeight: 500,
+        fontWeight: '500',
         letterSpacing: 0.60
     },
     input: {
@@ -55,7 +56,7 @@ const styles = StyleSheet.create({
         color: '#F3F3F3',
         fontSize: 12,
         fontFamily: 'Roboto Flex',
-        fontWeight: 500,
+        fontWeight: '500',
         padding:10
     }
 });

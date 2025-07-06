@@ -15,7 +15,7 @@ import Register from '../pages/Register.js';
 import { NavigationContainer } from '@react-navigation/native';
 import * as Font from 'expo-font';
 import AppLoading from 'expo-app-loading';
-import { useState } from 'react-native';
+import { useState } from 'react';
 
 const fetchFonts = () => {
   return Font.loadAsync({
@@ -38,7 +38,7 @@ const App = () => {
   }
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="Register" component={Register} />
           <Stack.Screen name="Home" component={AdminHomePage} />

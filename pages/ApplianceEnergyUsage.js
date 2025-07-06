@@ -1,9 +1,8 @@
 import { Alert, StyleSheet, View } from 'react-native';
 import CustomForm from './components/CustomForm'; 
-import SubmitIcon from '../assets/images/check.png'; 
 import PageLayout from '../components/PageLayout.js';
 
-const ApplianceEnergyUsage = () => {
+const ApplianceEnergyUsage = ({navigation}) => {
     const fields = [
         { name: 'appliance', label: 'Appliance', type: 'picker', placeholder: "Select appliance from below:", required: true },
         { name: 'timeDuration', label: 'Time (hours)', type: 'number', placeholder: "Time (hours)", required: true },
@@ -17,13 +16,13 @@ const ApplianceEnergyUsage = () => {
     
     return (
         <PageLayout navigation={navigation}>
-            <View styles={styles.container}>
+            <View style={styles.container}>
             <CustomForm
                 title="Electricity Meter Data"
                 registerQuestion={false}
                 fields={fields}
-                buttonText="Submit"
-                buttonIcon={<SubmitIcon width={25} height={25} />} 
+                buttonText={"Submit"}
+                buttonIcon={'../assets/images/check.png'} 
                 onSubmit = {handleSubmit}
             />
             </View>

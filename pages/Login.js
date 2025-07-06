@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import CustomForm from './components/CustomForm'; 
 import LoginIcon from '../assets/images/login.png'; 
 
-const Login = () => {
+const Login = ({navigation}) => {
   const fields = [
     { name: 'householdName', label: 'Household Name', type: 'email', placeholder: "Enter email...", required: true },
     { name: 'password', label: 'Password', type: 'password', placeholder: "Enter password...", required: true },
