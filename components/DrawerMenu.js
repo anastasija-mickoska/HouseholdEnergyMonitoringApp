@@ -1,6 +1,12 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
-const drawerRoutes = ['Home', 'Insights', 'Add Usage', 'Notifications', 'Logout'];
+const drawerRoutes = [
+  {name:'Home', img:'../assets/images/home.png'},
+  {name:'Add Usage', img:'../assets/images/add.png'},
+  {name:'Insights', img:'../assets/images/bar_chart.png'},
+  {name:'Notifications', img:'../assets/images/notifications.png'},  
+  {name:'Logout', img:'../assets/images/logout.png'},
+]
 
 export default function DrawerMenu({ navigation, closeDrawer }) {
   return (
@@ -14,7 +20,8 @@ export default function DrawerMenu({ navigation, closeDrawer }) {
             closeDrawer();
           }}
         >
-            <Text style={styles.drawerText}>{route}</Text>
+            <Image source = {{uri:route.img}} style={styles.icon}/>
+            <Text style={styles.drawerText}>{route.name}</Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -34,12 +41,19 @@ const styles = StyleSheet.create({
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#1AA7EC',
+    flexDirection:'row',
+    alignItems:'center'
   },
   drawerText: {
     color: '#F3F3F3',
     fontSize: 16,
     fontFamily: 'Roboto Flex',
     fontWeight: '500',
-    letterSpacing: 0.80
+    letterSpacing: 0.80,
+    marginLeft: 15
   },
+  icon: {
+    height:25,
+    width:25
+  }
 });

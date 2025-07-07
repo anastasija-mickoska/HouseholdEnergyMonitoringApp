@@ -4,7 +4,7 @@ import {View, Text,StyleSheet} from 'react-native';
 const WeeklyMonthlyInsight = ({title, texts, values}) => {
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.title}>Your usage</Text>
             <Insight title={title} text={texts[0]} value={values[0]} />
             <Insight title={title} text={texts[1]} value={values[1]} />
         </View>
@@ -17,7 +17,11 @@ const styles=StyleSheet.create({
     container: {
         flexDirection:'column',
         justifyContent:'space-between',
-        alignItems:'center'
+        alignItems:'center',
+        gap:20,
+        backgroundColor: 'rgba(26, 167, 236, 0.10)',
+        borderRadius:20,
+        padding:20
     },
     title: {
         color: '#1F2F98',

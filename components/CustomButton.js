@@ -16,6 +16,7 @@ const CustomButton = ({onPress, imgSource, text}) => {
 
 export default CustomButton;
 
+
 const styles= StyleSheet.create({
     button: {
         width: '60%',
@@ -23,7 +24,10 @@ const styles= StyleSheet.create({
         backgroundColor: '#F3F3F3',
         borderRadius: 20,
         borderColor: '#1F2F98',
-        borderWidth: 1
+        borderWidth: 1,
+        flexDirection:'row',
+        justifyContent:'center',
+        alignItems:'center'
     },
     buttonContent: {
         flexDirection: 'row',

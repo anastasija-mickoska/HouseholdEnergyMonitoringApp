@@ -12,12 +12,13 @@ const Notification = ({notification, date}) => {
 
 export default Notification;
 
+
 const styles=StyleSheet.create({
     container: {
         flexDirection:'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding:10,
+        padding:20,
         height: 60, 
         width: '90%',
         backgroundColor: '#FFFFFF',
@@ -34,7 +35,8 @@ const styles=StyleSheet.create({
         fontFamily: 'Roboto Flex',
         fontWeight: '400',
         lineHeight: 20,
-        letterSpacing: 0.6
+        letterSpacing: 0.6,
+        marginLeft:20
     },
     date: {
         color: 'rgba(0, 0, 0, 0.50)',

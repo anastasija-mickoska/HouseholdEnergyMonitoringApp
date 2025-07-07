@@ -6,6 +6,7 @@ const ApplianceEnergyUsage = ({navigation}) => {
     const fields = [
         { name: 'appliance', label: 'Appliance', type: 'picker', placeholder: "Select appliance from below:", required: true },
         { name: 'timeDuration', label: 'Time (hours)', type: 'number', placeholder: "Time (hours)", required: true },
+        { name: 'date', label: 'Date', type: 'date', placeholder: "Date:", required: true },
         { name: 'startingTime', label: 'Date', type: 'time', placeholder: "Starting time:", required: true },
     ];
 

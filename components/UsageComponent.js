@@ -24,30 +24,35 @@ export default UsageComponent;
 const styles=StyleSheet.create({
     container: {
         flexDirection:'column',
-        justifyContent:'center',
+        justifyContent:'space-around',
         alignItems:'center',
         width: '80%',
-        height: 230,
         backgroundColor:' rgba(26, 167, 236, 0.10)',
         borderRadius: 20,
-        padding:10
+        padding:20
     },
     title: {
         color: '#1F2F98',
         fontSize: 24,
         fontFamily: 'Roboto Flex',
         fontWeight: '600',
-        letterSpacing: 1.2
+        letterSpacing: 1.2,
     },
     usage: {
         flexDirection: 'row',
-        justifyContent:'space-between'
+        justifyContent:'center',
+        alignItems:'center'
     },
     weekMonth: {
         width: 140,
         height: 140,
         backgroundColor: '#1CA7EC',
         borderRadius: 20,
+        flexDirection:'column',
+        justifyContent:'space-around',
+        alignItems:'center',
+        marginHorizontal: 10,
+        marginVertical:20
     },
     text: {
         color: '#F3F3F3',

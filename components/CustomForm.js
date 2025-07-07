@@ -1,4 +1,7 @@
 import { View, TextInput, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { useState } from "react";
+import Picker  from '@react-native-picker/picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const CustomForm = ({title, registerQuestion, fields, buttonText, buttonIcon, onSubmit}) => {
     const [formData, setFormData] = useState({});
@@ -154,6 +157,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F3F3',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: rgba(0, 0, 0, 0.20)
+    borderColor: 'rgba(0, 0, 0, 0.20)'
   }
 });

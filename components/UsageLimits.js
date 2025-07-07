@@ -1,6 +1,6 @@
 import { TouchableOpacity, StyleSheet, Text, Image } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
-import { LinearGradient } from "react-native-svg";
+import { LinearGradient } from "expo-linear-gradient";
 
 const UsageLimits = ({weeklyLimit, monthlyLimit, handleSave}) => {
     return (
@@ -14,7 +14,7 @@ const UsageLimits = ({weeklyLimit, monthlyLimit, handleSave}) => {
                     colors={['#4ADEDE', '#1AA7EC']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
-                    style={styles.button}>
+                    style={styles.buttonStyle}>
                     <Text style={styles.buttonText}>Save</Text>
                     <Image source={require('../assets/images/add.png')}/>
                 </LinearGradient>
@@ -25,16 +25,20 @@ const UsageLimits = ({weeklyLimit, monthlyLimit, handleSave}) => {
 
 export default UsageLimits;
 
+
 const styles = StyleSheet.create({
     container: {
-        flex:1
+        flexDirection:'column',
+        justifyContent:'space-around',
+        alignItems:'center'
     },
     label: {
         color: '#1F2F98',
         fontSize: 12,
         fontFamily: 'Roboto Flex',
         fontWeight: '500',
-        letterSpacing: 0.60
+        letterSpacing: 0.60,
+        marginVertical:10
     },
     input: {
         width: '80%',
@@ -42,15 +46,25 @@ const styles = StyleSheet.create({
         backgroundColor: '#F3F3F3',
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: 'rgba(0, 0, 0, 0.20)'
+        borderColor: 'rgba(0, 0, 0, 0.20)',
+        textAlign:'center',
+        marginVertical:10,
+        color: 'rgba(0, 0, 0, 0.50)'
     },
-        button: {
+    button: {
         width: '30%',
         height: 40,
-        borderRadius: 20,
+        marginTop:50
+    },
+    buttonStyle: {
         justifyContent: 'center',
         alignItems: 'center',
-        flexDirection:'row'
+        flexDirection:'row',
+        borderRadius:20
+    },
+    icon: {
+      height:25,
+      width:25
     },
     buttonText: {
         color: '#F3F3F3',
