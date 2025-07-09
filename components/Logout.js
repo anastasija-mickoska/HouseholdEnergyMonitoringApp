@@ -1,9 +1,10 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import {useEffect} from 'react';
 const Logout = () => {
     const navigation=useNavigation();
     useEffect(() => {
-        //logout logic here
+        AsyncStorage.clear();
         navigation.replace('Login');
     }, [navigation]);
 }

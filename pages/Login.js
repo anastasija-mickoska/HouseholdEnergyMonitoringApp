@@ -1,17 +1,47 @@
 import { Alert, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import CustomForm from '../components/CustomForm'; 
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { doc, getDoc } from 'firebase/firestore';
+import { db, auth } from '../backend/config/firebaseConfig';
 
 const Login = ({navigation}) => {
   const fields = [
-    { name: 'householdName', label: 'Household Name', type: 'email', placeholder: "Enter email...", required: true },
+    { name: 'email', label:'Email', type: 'email', placeholder: "Enter email...", required: true },
     { name: 'password', label: 'Password', type: 'password', placeholder: "Enter password...", required: true },
   ];
 
-  const handleLogin = () => {
-    Alert.alert('Logged in!');
-    navigation.navigate('Welcome');
-  }
+  const handleLogin = async ({ email, password }) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      const token = await user.getIdToken(); 
+      const userDocRef = doc(db,"users",user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      if (!userDocSnap.exists()) {
+        throw new Error("User data not found in Firestore.");
+      }
+      const { role, name, householdId } = userDocSnap.data();
+      await AsyncStorage.multiSet([
+        ['role', role],
+        ['name', name],
+        ['email', email],
+        ['token', token],
+        ['householdId', (householdId != null ? householdId : '')]
+      ]);
+      Alert.alert('Logged in as:', user.email);
+      if(householdId === null) {
+        navigation.navigate('Welcome');
+      }
+      else {
+        navigation.navigate('Home');
+      }
+    } catch (error) {
+      Alert.alert("Login failed", error.message);
+    }
+  };
+
 
   return (
     <LinearGradient

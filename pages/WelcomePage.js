@@ -1,10 +1,28 @@
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import PageLayout from '../components/PageLayout';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import CreateHousehold from './CreateHousehold';
+import  {useState, useEffect} from 'react';
 
 const WelcomePage = ({ navigation }) => {
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    const getRole = async () => {
+      const storedRole = await AsyncStorage.getItem('role');
+      setRole(storedRole);
+    };
+    getRole();
+  }, []);
+
   const handlePress = () => {
-    navigation.navigate('Join Household'); 
+    if(role === 'Admin') {
+      navigation.navigate('Create Household');
+    }
+    else if(role === 'User') {
+      navigation.navigate('Join Household'); 
+    }
   };
 
   return (
@@ -25,7 +43,7 @@ const WelcomePage = ({ navigation }) => {
             end={{ x: 1, y: 0 }}
             style={styles.button}
           >
-            <Text style={styles.buttonText}>Create/Join household</Text>
+            <Text style={styles.buttonText}>{role === 'Admin' ? "Create Household" : "Join Household"}</Text>
             <Image source={require('../assets/images/add.png')} />
           </LinearGradient>
         </TouchableOpacity>

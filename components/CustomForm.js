@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Platform } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Platform, Alert } from "react-native";
 import { useState } from "react";
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -26,8 +26,14 @@ const CustomForm = ({title, registerQuestion, fields, buttonText, buttonIcon, on
         setShowDatePickers(prev => ({ ...prev, [name]: false }));
     };
 
-    const handleSubmit = (event) => {
-      onSubmit();
+    const handleSubmit = () => {
+        for (let field of fields) {
+          if (field.required && !formData[field.name]) {
+            Alert.alert("Missing field", `${field.label} is required.`);
+            return;
+          }
+        }
+        onSubmit(formData); 
     };
 
     const renderInputField = (field) => {
