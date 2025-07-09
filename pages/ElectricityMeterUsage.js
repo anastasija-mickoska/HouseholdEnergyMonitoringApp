@@ -1,6 +1,6 @@
-import { StyleSheet, View } from 'react-native';
-import CustomForm from './components/CustomForm'; 
-import PageLayout from '../components/PageLayout.js';
+import { StyleSheet, View, Alert } from 'react-native';
+import CustomForm from '../components/CustomForm'; 
+import PageLayout from '../components/PageLayout';
 
 const ElectricityMeterUsage = ({navigation}) => {
     const fields = [
@@ -10,8 +10,9 @@ const ElectricityMeterUsage = ({navigation}) => {
     ];
 
     const handleSubmit = (event) => {
-        text = "Energy usage successfully added.\n Total KWh consumption: \n Total electricity cost: \n"
-        Alert.alert(text);
+        //modal instead of built-in alert for styling purposes
+        Alert.alert('Energy usage successfully added. Total KWh consumption: Total electricity cost: ');
+        navigation.navigate('Home');
     }
 
   return (
@@ -22,7 +23,7 @@ const ElectricityMeterUsage = ({navigation}) => {
           registerQuestion={false}
           fields={fields}
           buttonText={"Submit"}
-          buttonIcon={'../assets/images/check.png'} 
+          buttonIcon={"check"} 
           onSubmit = {handleSubmit}
         />
       </View>
@@ -35,6 +36,8 @@ export default ElectricityMeterUsage;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width:'100%',
+    padding:30
   },
 });
 

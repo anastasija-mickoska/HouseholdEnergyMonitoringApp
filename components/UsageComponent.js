@@ -24,9 +24,9 @@ export default UsageComponent;
 const styles=StyleSheet.create({
     container: {
         flexDirection:'column',
-        justifyContent:'space-around',
+        justifyContent:'space-between',
         alignItems:'center',
-        width: '80%',
+        width: '100%',
         backgroundColor:' rgba(26, 167, 236, 0.10)',
         borderRadius: 20,
         padding:20
@@ -35,12 +35,12 @@ const styles=StyleSheet.create({
         color: '#1F2F98',
         fontSize: 24,
         fontFamily: 'Roboto Flex',
-        fontWeight: '600',
+        fontWeight: '700',
         letterSpacing: 1.2,
     },
     usage: {
         flexDirection: 'row',
-        justifyContent:'center',
+        justifyContent:'space-around',
         alignItems:'center'
     },
     weekMonth: {

@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
 export default function AppHeader({ onMenuToggle }) {
   return (
@@ -22,10 +22,13 @@ const styles = StyleSheet.create({
   menu: {
     width:25,
     height:25,
-    marginLeft:30
+    marginLeft:20,
+    justifyContent:'center',
+    alignItems:'center'
   },
   icon: {
     height:25,
     width:25,
+    alignItems:'center'
   }
 });

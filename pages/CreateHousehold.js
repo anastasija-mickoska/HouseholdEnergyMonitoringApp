@@ -1,6 +1,6 @@
-import { StyleSheet, View } from 'react-native';
-import CustomForm from './components/CustomForm'; 
-import PageLayout from '../components/PageLayout.js';
+import { StyleSheet, View, Alert} from 'react-native';
+import CustomForm from '../components/CustomForm'; 
+import PageLayout from '../components/PageLayout';
 
 const CreateHousehold = ({navigation}) => {
   const fields = [
@@ -8,6 +8,12 @@ const CreateHousehold = ({navigation}) => {
     { name: 'address', label: 'Address', type: 'text', placeholder: "Enter address...", required: true },
     { name: 'householdCode', label: 'Household Code', type: 'text', placeholder: "Enter household code...", required: true },
   ];
+
+  const handleCreate = () => {
+        //creating/joining a household logic here
+      Alert.alert('Created household!');
+      navigation.navigate('Home');
+  }
 
   return (
     <PageLayout navigation={navigation}>
@@ -17,7 +23,8 @@ const CreateHousehold = ({navigation}) => {
           registerQuestion={false}
           fields={fields}
           buttonText={"Create"}
-          buttonIcon={'../assets/images/add.png'} 
+          buttonIcon={"add"} 
+          onSubmit={handleCreate}
         />
       </View>
     </PageLayout>
@@ -29,5 +36,8 @@ export default CreateHousehold;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent:'center',
+    alignItems:'center',
+    padding:30
   },
 });

@@ -1,6 +1,6 @@
 import { Alert, StyleSheet, View } from 'react-native';
-import CustomForm from './components/CustomForm'; 
-import PageLayout from '../components/PageLayout.js';
+import CustomForm from '../components/CustomForm'; 
+import PageLayout from '../components/PageLayout';
 
 const ApplianceEnergyUsage = ({navigation}) => {
     const fields = [
@@ -11,19 +11,20 @@ const ApplianceEnergyUsage = ({navigation}) => {
     ];
 
     const handleSubmit = (event) => {
-        text = "Energy usage successfully added.\n Total KWh consumption: \n Total electricity cost: \n"
-        Alert.alert(text);
+        //modal
+        Alert.alert('Energy usage successfully added.Total KWh consumption:Total electricity cost:');
+        navigation.navigate('Home');
     }
     
     return (
         <PageLayout navigation={navigation}>
             <View style={styles.container}>
             <CustomForm
-                title="Electricity Meter Data"
+                title="Appliance Energy Usage Data"
                 registerQuestion={false}
                 fields={fields}
                 buttonText={"Submit"}
-                buttonIcon={'../assets/images/check.png'} 
+                buttonIcon={"check"} 
                 onSubmit = {handleSubmit}
             />
             </View>
@@ -36,6 +37,8 @@ export default ApplianceEnergyUsage;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding:30,
+    width:'100%'
   },
 });
 

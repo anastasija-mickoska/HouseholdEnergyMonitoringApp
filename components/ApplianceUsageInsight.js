@@ -42,13 +42,14 @@ const styles = StyleSheet.create({
         gap:10,
         backgroundColor: 'rgba(26, 167, 236, 0.10)',
         borderRadius:20,
-        padding:20
+        padding:30,
+        width:'100%'
     },
     title: {
         color: '#1F2F98',
         fontSize: 24,
         fontFamily: 'Roboto Flex',
-        fontWeight: '600',
+        fontWeight: '700',
         letterSpacing: 1.2
     },
     charts: {

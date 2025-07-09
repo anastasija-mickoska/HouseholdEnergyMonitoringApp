@@ -1,16 +1,16 @@
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import PageLayout from '../components/PageLayout.js';
+import PageLayout from '../components/PageLayout';
 
 const WelcomePage = ({ navigation }) => {
   const handlePress = () => {
-    navigation.navigate('Create Household'); 
+    navigation.navigate('Join Household'); 
   };
 
   return (
     <PageLayout navigation={navigation}>
       <View style={styles.container}>
-        <Text style={styles.welcome}>Welcome, *NAME OF THE USER*!</Text>
+        <Text style={styles.welcome}>Welcome, Anastasija!</Text>
 
         <View style={styles.view}>
           <Text style={styles.viewText}>
@@ -40,22 +40,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center' 
+    alignItems: 'center',
+    padding:30,
+    gap:30
   },
   welcome: {
     color: '#1F2F98',
     fontSize: 32,
     fontFamily: 'Roboto Flex',
-    fontWeight: '600',
+    fontWeight: '700',
     letterSpacing: 3.2,
-    marginBottom: 20
+    marginBottom: 20,
+    wordWrap:'break-word'
   },
   view: {
-    width: '80%',
+    width: '100%',
     height: 80,
     backgroundColor: '#4ADEDE',
     borderRadius: 20,
     justifyContent: 'center',
+    alignItems:'center',
     marginBottom: 20
   },
   viewText: {
@@ -63,10 +67,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Roboto Flex',
     fontWeight: '500',
-    padding: 10
+    padding: 20
   },
   button: {
-    width: '60%',
+    width: '80%',
     height: 40,
     borderRadius: 20,
     justifyContent: 'center',

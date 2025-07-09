@@ -25,7 +25,7 @@ export default Limits;
 
 const styles = StyleSheet.create({
     container: {
-        width:'80%',
+        width:'100%',
         height:70,
         backgroundColor: '#1F2F98',
         borderRadius: 20,
@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 12,
         fontFamily: 'Roboto Flex',
-        fontWeight: '500',
+        fontWeight: '600',
         letterSpacing: 0.6
     },    
     limitNumber: {
@@ -55,6 +55,7 @@ const styles = StyleSheet.create({
     },
     icon: {
         width:30,
-        height:30
+        height:30,
+        marginRight:10
     }
 });

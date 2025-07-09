@@ -1,5 +1,4 @@
-import { TouchableOpacity, StyleSheet, Text, Image } from "react-native";
-import { TextInput } from "react-native-gesture-handler";
+import { TouchableOpacity, StyleSheet, Text, Image, View, TextInput } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 
 const UsageLimits = ({weeklyLimit, monthlyLimit, handleSave}) => {
@@ -30,7 +29,8 @@ const styles = StyleSheet.create({
     container: {
         flexDirection:'column',
         justifyContent:'space-around',
-        alignItems:'center'
+        alignItems:'center',
+        width:'100%'
     },
     label: {
         color: '#1F2F98',
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     button: {
         width: '30%',
         height: 40,
-        marginTop:50
+        marginTop:20
     },
     buttonStyle: {
         justifyContent: 'center',

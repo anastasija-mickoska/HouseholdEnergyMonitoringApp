@@ -18,16 +18,16 @@ const styles=StyleSheet.create({
         flexDirection:'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding:20,
-        height: 60, 
-        width: '90%',
+        padding:10,
+        width: '100%',
         backgroundColor: '#FFFFFF',
         boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.20)',
         borderRadius: 20
     },
     alert: {
         width:25,
-        height:25
+        height:25,
+        marginLeft:15,
     },
     notification: {
         color: '#1F2F98',
@@ -36,13 +36,13 @@ const styles=StyleSheet.create({
         fontWeight: '400',
         lineHeight: 20,
         letterSpacing: 0.6,
-        marginLeft:20
+        width:'60%'
     },
     date: {
         color: 'rgba(0, 0, 0, 0.50)',
         fontSize: 10,
         fontFamily: 'Roboto Flex',
         fontWeight: '400',
-        letterSpacing: 0.5
+        letterSpacing: 0.5,
     }
 })

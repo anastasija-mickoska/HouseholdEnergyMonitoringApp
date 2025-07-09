@@ -21,15 +21,17 @@ export default AddUsage;
 
 const styles=StyleSheet.create({
     container: {
+        flexDirection:'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 20
+        padding: 20,
+        gap:30
     },
     add: {
         color: '#1F2F98',
         fontSize: 32,
         fontFamily: 'Roboto Flex',
-        fontWeight: '600',
+        fontWeight: '700',
         letterSpacing: 1.6,
     },
     select: {

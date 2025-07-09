@@ -1,11 +1,17 @@
-import { TouchableOpacity, Text, Image, StyleSheet } from "react-native";
+import { TouchableOpacity, Text, Image, StyleSheet, View } from "react-native";
 
+const iconMap = {
+  add: require('../assets/images/add.png'),
+  edit: require('../assets/images/edit.png'),
+  insights: require('../assets/images/bar_chart.png'),
+  notifications: require('../assets/images/notifications.png')
+};
 
 const CustomButton = ({onPress, imgSource, text}) => {
     return(
         <TouchableOpacity style={styles.button} onPress={onPress}>
             <View style={styles.buttonContent}>
-                { imgSource!=null && <Image source={require(imgSource)} style={styles.icon}/>}
+                {imgSource && <Image source={iconMap[imgSource]} style={styles.icon} />}
                 <Text style={styles.buttonText}>
                     {text}
                 </Text>
@@ -19,7 +25,7 @@ export default CustomButton;
 
 const styles= StyleSheet.create({
     button: {
-        width: '60%',
+        width: '80%',
         height: 40,
         backgroundColor: '#F3F3F3',
         borderRadius: 20,
@@ -32,12 +38,13 @@ const styles= StyleSheet.create({
     buttonContent: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center', 
+        justifyContent:'center', 
         gap: 10,
     },
     icon: {
         height:25,
-        width:25
+        width:25,
+        tintColor:'#1F2F98'
     },
     buttonText: {
         color: '#1F2F98',
