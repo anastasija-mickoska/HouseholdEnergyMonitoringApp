@@ -28,7 +28,8 @@ const Login = ({navigation}) => {
         ['name', name],
         ['email', email],
         ['token', token],
-        ['householdId', (householdId != null ? householdId : '')]
+        ['householdId', (householdId != null ? householdId : '')],
+        ['id', user.uid]
       ]);
       Alert.alert('Logged in as:', user.email);
       if(householdId === null) {

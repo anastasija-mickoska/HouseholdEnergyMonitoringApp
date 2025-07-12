@@ -1,6 +1,7 @@
 import { StyleSheet, View, Alert } from 'react-native';
 import CustomForm from '../components/CustomForm'; 
 import PageLayout from '../components/PageLayout';
+import { joinHousehold } from '../backend/firestoreService';
 
 const JoinHousehold = ({navigation}) => {
   const fields = [
@@ -8,12 +9,27 @@ const JoinHousehold = ({navigation}) => {
     { name: 'householdCode', label: 'Household Code', type: 'text', placeholder: "Enter household code...", required: true },
   ];
 
-  const handleJoin = () => {
-        //creating/joining a household logic here
-      Alert.alert('Joined household!');
-      navigation.navigate('Home');
-  }
+  const [userId, setUserId] = useState(null);
 
+  useEffect(() => {
+    const getUserId = async () => {
+      const storedUserId = await AsyncStorage.getItem('id');
+      setUserId(storedUserId);
+    };
+    getUserId();
+  }, []);
+
+  const handleJoin = async ({ householdName, householdCode }) => {
+      try {
+        //to be continued...
+        await joinHousehold(householdData);
+        Alert.alert('Created household!');
+        navigation.navigate('Home');
+      }
+      catch(error){
+        Alert.alert('Creating household failed!', error.message);
+      }
+  }
   return (
     <PageLayout navigation={navigation}>
       <View style={styles.container}>

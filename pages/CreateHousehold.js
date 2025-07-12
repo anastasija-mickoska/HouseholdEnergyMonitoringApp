@@ -1,6 +1,8 @@
 import { StyleSheet, View, Alert} from 'react-native';
 import CustomForm from '../components/CustomForm'; 
 import PageLayout from '../components/PageLayout';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {createHousehold} from '../backend/config/firestoreService';
 
 const CreateHousehold = ({navigation}) => {
   const fields = [
@@ -8,11 +10,33 @@ const CreateHousehold = ({navigation}) => {
     { name: 'address', label: 'Address', type: 'text', placeholder: "Enter address...", required: true },
     { name: 'householdCode', label: 'Household Code', type: 'text', placeholder: "Enter household code...", required: true },
   ];
+  const [userId, setUserId] = useState(null);
 
-  const handleCreate = () => {
-        //creating/joining a household logic here
-      Alert.alert('Created household!');
-      navigation.navigate('Home');
+  useEffect(() => {
+    const getUserId = async () => {
+      const storedUserId = await AsyncStorage.getItem('id');
+      setUserId(storedUserId);
+    };
+    getUserId();
+  }, []);
+
+  const handleCreate = async ({ householdName, address, householdCode }) => {
+      try {
+        const householdData = {
+          householdName:householdName,
+          address:address,
+          householdCode:householdCode,
+          members: [userId],
+          weeklyLimit:null,
+          monthlyLimit:null
+        }
+        await createHousehold(householdData);
+        Alert.alert('Created household!');
+        navigation.navigate('Home');
+      }
+      catch(error){
+        Alert.alert('Creating household failed!', error.message);
+      }
   }
 
   return (
