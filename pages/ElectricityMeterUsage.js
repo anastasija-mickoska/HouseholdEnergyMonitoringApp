@@ -15,16 +15,13 @@ const ElectricityMeterUsage = ({navigation}) => {
   const [userId, setUserId] = useState(null);
 
   useEffect(() => {
-    const getUserId = async () => {
-      const storedUserId = await AsyncStorage.getItem('id');
-      setUserId(storedUserId);
-    };
-    getUserId();
-    const getHouseholdId = async () => {
-      const storedHouseholdId = await AsyncStorage.getItem('householdId');
-      setHouseholdId(storedHouseholdId);
-    };
-    getHouseholdId();
+      const loadIds = async () => {
+          const storedUserId = await AsyncStorage.getItem('id');
+          const storedHouseholdId = await AsyncStorage.getItem('householdId');
+          setUserId(storedUserId);
+          setHouseholdId(storedHouseholdId);
+      };
+      loadIds();
   }, []);
 
     const handleSubmit = async ({highTariff, lowTariff, electricityMeterSubmitDate}) => {
@@ -45,15 +42,20 @@ const ElectricityMeterUsage = ({navigation}) => {
             },
             body: JSON.stringify(usageData)
           });
+
+          if (!res.ok) {
+              throw new Error('Failed to submit usage data.');
+          }
+
           const json = await res.json();
-          if(json.message && json.message == 'Electricity meter usage added.') {
+          if(json.message == 'Electricity meter usage added.') {
             //also here totalConsumption and totalCost should be calculated
             //modal instead of built-in alert for styling purposes
             Alert.alert('Energy usage successfully added. Total KWh consumption: Total electricity cost: ');
             navigation.navigate('Home');
           }
           else {
-            Alert.alert(json.error);
+            Alert.alert(json.error || 'Unknown error');
           }
         }
         catch(error) {

@@ -3,18 +3,28 @@ import ElectricityMeterInsight from "../components/ElectricityMeterInsight";
 import PageLayout from "../components/PageLayout";
 import {Text, StyleSheet, View, ScrollView} from 'react-native';
 import CustomButton from '../components/CustomButton';
+import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const usages = [];
 
 const InsightsPage = ({navigation}) => {
+    const [role, setRole] = useState(null);
+    useEffect(()=> {
+        const getUserRole = async() => {
+            const storedRole = await AsyncStorage.getItem('role');
+            setRole(storedRole);
+        }
+        getUserRole();
+    }, [])
     return(
         <PageLayout navigation={navigation}>
             <ScrollView contentContainerStyle={styles.container}>
                 <Text style={styles.title}>Overview</Text>
                 <View style={styles.mainContent}>
                     <ElectricityMeterInsight lowTariff={24} highTariff={26} totalCost={1500}/>
-                    {/*This should only appear for admin*/}
-                    <ApplianceUsageInsight title={'Appliance Usage Data'} applianceUsage={24} usagesByAppliance={usages} totalCost={540}/>
+                    { role == 'Admin' &&  
+                        <ApplianceUsageInsight title={'Appliance Usage Data'} applianceUsage={24} usagesByAppliance={usages} totalCost={540}/> }
                     <ApplianceUsageInsight title={'Your Appliance Usage'} applianceUsage={15} usagesByAppliance={usages} totalCost={300}/>
                     <CustomButton text={'View Notifications'} imgSource={"notifications"} onPress={()=>{navigation.navigate('Notifications')}}/>
                 </View>

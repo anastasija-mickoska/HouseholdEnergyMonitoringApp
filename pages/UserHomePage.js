@@ -4,8 +4,89 @@ import WeeklyMonthlyInsight from '../components/WeeklyMonthlyInsight';
 import Limits from '../components/Limits';
 import UsageComponent from '../components/UsageComponent';
 import CustomButton from '../components/CustomButton';
+import auth from '@react-native-firebase/auth';
+import { useEffect, useState } from 'react';
 
-const UserHomePage = ({navigation, householdName}) => {
+const UserHomePage = ({navigation}) => {
+    const [householdId, setHouseholdId] = useState(null);
+    const [userId, setUserId] = useState(null);
+    const [token, setToken] = useState(null);
+    const [userName, setUserName] = useState('');
+    const [householdName, setHouseholdName] = useState('');
+    const [weeklyLimit, setWeeklyLimit] = useState('');
+    const [monthlyLimit, setMonthlyLimit] = useState('');
+
+    useEffect(() => {
+        const initData = async () => {
+            const storedHouseholdId = await AsyncStorage.getItem('householdId');
+            const storedUserId = await AsyncStorage.getItem('id');
+            const fetchedToken = await auth().currentUser.getIdToken();
+
+            setHouseholdId(storedHouseholdId);
+            setUserId(storedUserId);
+            setToken(fetchedToken);
+        };
+        initData();
+    }, []);
+
+    useEffect(() => {
+        if (userId && token) {
+            fetchUserName();
+        }
+    }, [userId, token]);
+
+    useEffect(() => {
+        if (householdId && token) {
+            fetchUsageLimits();
+        }
+    }, [householdId, token]);
+
+
+    const fetchUserName = async() => {
+        try {
+            const res = await fetch(`http://192.168.1.108:8000/users/${userId}`, {
+                method:'GET',
+                headers: {
+                    'Authorization':`Bearer ${token}`
+                }
+            });
+            const json = await res.json();
+            if(json.error) {
+                Alert.alert(json.error);
+            }
+            else{
+                setUserName(json.name);
+            }
+        }
+        catch(error) {
+            console.error(error);
+        }
+    };
+
+    const fetchUsageLimits = async() => {
+        try {
+            const res = await fetch(`http://192.168.1.108:8000/households/${householdId}`, {
+                method:'GET',
+                headers: {
+                    'Authorization':`Bearer ${token}`
+                }
+            });
+            const json = await res.json();
+            if(json.error) {
+                Alert.alert(json.error);
+            }
+            else {
+                setWeeklyLimit(json.weeklyLimit);
+                setMonthlyLimit(json.monthlyLimit);
+                setHouseholdName(json.householdName);
+            }
+        }catch(error) {
+            console.error(error);
+        }
+    };
+
+    //still to fetch electricity cost and usage
+
 
     const handleAddButton = () => {
         navigation.navigate('Add Usage');
@@ -19,13 +100,13 @@ const UserHomePage = ({navigation, householdName}) => {
         <PageLayout navigation={navigation}>
             <ScrollView contentContainerStyle={styles.container}>
                 <Text style={styles.title}>Dashboard</Text>
-                <Text style={styles.welcomeText}>Hi, *NAME OF THE USER*!</Text>
+                <Text style={styles.welcomeText}>Hi, {userName}!</Text>
                 <View style={styles.mainContent}>
                     <View style={styles.household}>
-                        <Text style={styles.householdName}>HOUSEHOLD NAME</Text> 
+                        <Text style={styles.householdName}>{householdName}</Text> 
                     </View>
                     <UsageComponent week={50} month={150}/>
-                    <Limits week={60} month={200}/>
+                    <Limits week={weeklyLimit} month={monthlyLimit}/>
                     <WeeklyMonthlyInsight title={'Your Usage'} texts={['This Week', 'This Month']} values={[15,85]}/>
                     <CustomButton text={'View Insights'} imgSource={"insights"} onPress={handleInsightsButton}/>
                     <WeeklyMonthlyInsight title={'Electricity cost'} texts={['This week', 'This month']} values={[1240,4520]}/>

@@ -2,7 +2,6 @@ import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import PageLayout from '../components/PageLayout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import CreateHousehold from './CreateHousehold';
 import  {useState, useEffect} from 'react';
 
 const WelcomePage = ({ navigation }) => {

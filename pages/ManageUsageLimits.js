@@ -8,13 +8,34 @@ import auth from '@react-native-firebase/auth';
 const ManageUsageLimits = ({navigation}) => {
   const [householdId, setHouseholdId] = useState(null);
 
-  useEffect(() => {
-    const getHouseholdId = async () => {
-      const storedHouseholdId = await AsyncStorage.getItem('householdId');
-      setHouseholdId(storedHouseholdId);
-    };
-    getHouseholdId();
-  }, []);
+    useEffect(() => {
+        const getHouseholdId = async () => {
+        const storedHouseholdId = await AsyncStorage.getItem('householdId');
+        setHouseholdId(storedHouseholdId);
+        };
+        getHouseholdId();
+    }, []);
+
+    const weeklyLimit = '';
+    const monthlyLimit = '';
+
+    const fetchUsageLimits = async() => {
+        const res = await fetch(`http://192.168.1.108:8000/households/${householdId}`, {
+            method:'GET',
+            headers: {
+                'Authorization':`Bearer ${token}`
+            }
+        });
+        const json = await res.json();
+        if(json.error) {
+            Alert.alert(json.error);
+        }
+        else {
+            weeklyLimit = json.weeklyLimit;
+            monthlyLimit = json.monthlyLimit;
+        }
+    }
+    fetchUsageLimits();
 
     const saveLimits = async ({weekly, monthly}) => {
         try {
@@ -49,7 +70,7 @@ const ManageUsageLimits = ({navigation}) => {
         <PageLayout navigation={navigation}>
             <ScrollView contentContainerStyle={styles.container}>
                 <Text style={styles.title}>Manage Usage Limits</Text>
-                <WeeklyMonthlyInsight texts={['Weekly limit', 'Monthly limit']} values={[60,200]}/>
+                <WeeklyMonthlyInsight texts={['Weekly limit', 'Monthly limit']} values={[`${weeklyLimit} KWh`,`${monthlyLimit} KWh`]}/>
                 <UsageLimits weeklyLimit={60} monthlyLimit={200} handleSave={saveLimits}/>
             </ScrollView>
         </PageLayout> 

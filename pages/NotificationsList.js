@@ -4,18 +4,18 @@ import Notification from '../components/Notification';
 import { useEffect, useState } from "react";
 import auth from '@react-native-firebase/auth';
 
-const notificationsExample = [
-    { id:1,text: "Some text", date:'08/07/2025'},
-    { id:2,text: "Some text", date:'08/07/2025'},
-    { id:3,text: "Some text", date:'08/07/2025'},
-    { id:4,text: "Some text", date:'08/07/2025'},
-    { id:5,text: "Some text", date:'08/07/2025'},
-    { id:6,text: "Some text", date:'08/07/2025'},
-    { id:7,text: "Some text", date:'08/07/2025'},
-    { id:8,text: "Some text", date:'08/07/2025'},
-    { id:9,text: "Some text", date:'08/07/2025'},
-    { id:10,text: "Some text", date:'08/07/2025'},
-];
+// const notificationsExample = [
+//     { id:1,text: "Some text", date:'08/07/2025'},
+//     { id:2,text: "Some text", date:'08/07/2025'},
+//     { id:3,text: "Some text", date:'08/07/2025'},
+//     { id:4,text: "Some text", date:'08/07/2025'},
+//     { id:5,text: "Some text", date:'08/07/2025'},
+//     { id:6,text: "Some text", date:'08/07/2025'},
+//     { id:7,text: "Some text", date:'08/07/2025'},
+//     { id:8,text: "Some text", date:'08/07/2025'},
+//     { id:9,text: "Some text", date:'08/07/2025'},
+//     { id:10,text: "Some text", date:'08/07/2025'},
+// ];
 
 const NotificationsList = ({navigation, notifications}) => {
     const [householdId, setHouseholdId] = useState(null);
@@ -28,13 +28,37 @@ const NotificationsList = ({navigation, notifications}) => {
         getHouseholdId();
     }, []);
 
+    const token = auth().currentUser.getIdToken();
+    const notifications = [];
+
+    const fetchNotifications = async() => {
+        const res = await fetch(`http://192.168.1.108:8000/notifications/${householdId}`, {
+            method:'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        notifications = await res.json();
+    }
+    fetchNotifications();
+
+    if(notifications.length == 0) {
+        return (
+            <PageLayout navigation={navigation}>
+                <View style={styles.container}>
+                    <Text style={styles.title}>Notifications.</Text>   
+                    <Text style={styles.text}>No notifications available.</Text>       
+                </View>
+            </PageLayout>            
+        )
+    }
     return(
         <PageLayout navigation={navigation}>
             <View style={styles.container}>
                 <Text style={styles.title}>Notifications</Text>
                 <ScrollView contentContainerStyle={styles.notifications}>
                 {
-                    notificationsExample.map((item, index) => (
+                    notifications.map((item, index) => (
                         <Notification key={item.id} notification = {item.text} date = {item.date}/>
                     ))
                 }
@@ -63,5 +87,13 @@ const styles = StyleSheet.create({
         gap:10,
         justifyContent:'center',
         alignItems:'center'
-    }
+    },
+    text: {
+        color: '#1F2F98',
+        fontSize: 20,
+        fontFamily: 'Roboto Flex',
+        fontWeight: '500',
+        alignItems:'center',
+        marginTop:30
+    },
 });
