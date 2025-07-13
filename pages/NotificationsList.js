@@ -1,6 +1,8 @@
 import PageLayout from "../components/PageLayout";
 import {View, StyleSheet, Text, ScrollView} from 'react-native';
 import Notification from '../components/Notification';
+import { useEffect, useState } from "react";
+import auth from '@react-native-firebase/auth';
 
 const notificationsExample = [
     { id:1,text: "Some text", date:'08/07/2025'},
@@ -16,6 +18,16 @@ const notificationsExample = [
 ];
 
 const NotificationsList = ({navigation, notifications}) => {
+    const [householdId, setHouseholdId] = useState(null);
+
+    useEffect(() => {
+        const getHouseholdId = async () => {
+        const storedHouseholdId = await AsyncStorage.getItem('householdId');
+        setHouseholdId(storedHouseholdId);
+        };
+        getHouseholdId();
+    }, []);
+
     return(
         <PageLayout navigation={navigation}>
             <View style={styles.container}>

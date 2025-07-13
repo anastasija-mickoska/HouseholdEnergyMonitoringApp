@@ -16,7 +16,6 @@ const Login = ({navigation}) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      const token = await user.getIdToken(); 
       const userDocRef = doc(db,"users",user.uid);
       const userDocSnap = await getDoc(userDocRef);
       if (!userDocSnap.exists()) {
@@ -27,16 +26,14 @@ const Login = ({navigation}) => {
         ['role', role],
         ['name', name],
         ['email', email],
-        ['token', token],
         ['householdId', (householdId != null ? householdId : '')],
         ['id', user.uid]
       ]);
       Alert.alert('Logged in as:', user.email);
-      if(householdId === null) {
-        navigation.navigate('Welcome');
-      }
-      else {
-        navigation.navigate('Home');
+      if (!householdId) {
+          navigation.navigate('Welcome');
+      } else {
+          navigation.navigate('Home');
       }
     } catch (error) {
       Alert.alert("Login failed", error.message);

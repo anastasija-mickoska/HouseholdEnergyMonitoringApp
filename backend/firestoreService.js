@@ -38,13 +38,18 @@ const createHousehold = async(household) => {
     }
 };
 
-const joinHousehold = async(householdId, userId) => {
+const joinHousehold = async(householdId, userId, code, name) => {
     try {
         const doc = await db.collection('Households').doc(householdId).get();
         if(!doc.exists()) {
             throw new Error('Household with this ID does not exist!');
         }
         const data = doc.data();
+        const householdCode = data.householdCode;
+        const householdName = data.householdName;
+        if(name != householdName || householdCode != code) {
+            throw new Error('Invalid household data!');
+        }
         const updatedMembers = data.members?.includes(userId)
         ? data.members
         : [...(data.members || []), userId];

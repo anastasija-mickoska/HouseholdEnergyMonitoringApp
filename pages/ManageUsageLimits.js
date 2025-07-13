@@ -2,12 +2,47 @@ import PageLayout from "../components/PageLayout";
 import WeeklyMonthlyInsight from "../components/WeeklyMonthlyInsight";
 import UsageLimits from '../components/UsageLimits';
 import { Alert, StyleSheet, Text, View, ScrollView } from "react-native";
+import { useEffect, useState } from "react";
+import auth from '@react-native-firebase/auth';
 
 const ManageUsageLimits = ({navigation}) => {
+  const [householdId, setHouseholdId] = useState(null);
 
-    const saveLimits = () => {
-        Alert.alert('Handling save button...');
-        navigation.navigate('Home');
+  useEffect(() => {
+    const getHouseholdId = async () => {
+      const storedHouseholdId = await AsyncStorage.getItem('householdId');
+      setHouseholdId(storedHouseholdId);
+    };
+    getHouseholdId();
+  }, []);
+
+    const saveLimits = async ({weekly, monthly}) => {
+        try {
+            const token = auth().currentUser.getIdToken();
+            const limits = {
+                weeklyLimit:weekly,
+                monthlyLimit:monthly
+            };
+            const res = await fetch(`http://192.168.1.108:8000/households/${householdId}/limits`, {
+                method:'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(limits)
+            });
+            const json = await res.json();
+            if(json.message && json.message == 'Limits saved.') {
+                Alert.alert('Limits saved successfully.');
+                navigation.navigate('Home');
+            }
+            else {
+                Alert.alert(json.error);
+            }
+        }
+        catch(error) {
+            Alert.alert('Error saving data!', error.message);
+        }
     }
 
     return(

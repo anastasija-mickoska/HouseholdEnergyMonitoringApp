@@ -1,6 +1,8 @@
 import { StyleSheet, View, Alert } from 'react-native';
 import CustomForm from '../components/CustomForm'; 
 import PageLayout from '../components/PageLayout';
+import { useEffect, useState } from 'react';
+import auth from '@react-native-firebase/auth';
 
 const ElectricityMeterUsage = ({navigation}) => {
     const fields = [
@@ -9,10 +11,54 @@ const ElectricityMeterUsage = ({navigation}) => {
         { name: 'electricityMeterSubmitDate', label: 'Date', type: 'date', placeholder: "Select date...", required: true },
     ];
 
-    const handleSubmit = (event) => {
-        //modal instead of built-in alert for styling purposes
-        Alert.alert('Energy usage successfully added. Total KWh consumption: Total electricity cost: ');
-        navigation.navigate('Home');
+  const [householdId, setHouseholdId] = useState(null);
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const getUserId = async () => {
+      const storedUserId = await AsyncStorage.getItem('id');
+      setUserId(storedUserId);
+    };
+    getUserId();
+    const getHouseholdId = async () => {
+      const storedHouseholdId = await AsyncStorage.getItem('householdId');
+      setHouseholdId(storedHouseholdId);
+    };
+    getHouseholdId();
+  }, []);
+
+    const handleSubmit = async ({highTariff, lowTariff, electricityMeterSubmitDate}) => {
+        try {
+          const token = auth().currentUser.getIdToken();
+          const usageData = {
+            userId:userId,
+            householdId: householdId,
+            highTariff: highTariff,
+            lowTariff: lowTariff,
+            date: electricityMeterSubmitDate,
+          };
+          const res = await fetch('http://192.168.1.108:8000/electricityMeterUsages', {
+            method:'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(usageData)
+          });
+          const json = await res.json();
+          if(json.message && json.message == 'Electricity meter usage added.') {
+            //also here totalConsumption and totalCost should be calculated
+            //modal instead of built-in alert for styling purposes
+            Alert.alert('Energy usage successfully added. Total KWh consumption: Total electricity cost: ');
+            navigation.navigate('Home');
+          }
+          else {
+            Alert.alert(json.error);
+          }
+        }
+        catch(error) {
+          Alert.alert('Error submitting data!', error.message);
+        }
     }
 
   return (
