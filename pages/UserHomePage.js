@@ -1,11 +1,12 @@
-import {View, Text,StyleSheet, ScrollView} from 'react-native';
+import {View, Text,StyleSheet, ScrollView, Alert} from 'react-native';
 import PageLayout from '../components/PageLayout';
 import WeeklyMonthlyInsight from '../components/WeeklyMonthlyInsight';
 import Limits from '../components/Limits';
 import UsageComponent from '../components/UsageComponent';
 import CustomButton from '../components/CustomButton';
-import auth from '@react-native-firebase/auth';
+import { auth } from '../firebase';
 import { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const UserHomePage = ({navigation}) => {
     const [householdId, setHouseholdId] = useState(null);
@@ -20,7 +21,7 @@ const UserHomePage = ({navigation}) => {
         const initData = async () => {
             const storedHouseholdId = await AsyncStorage.getItem('householdId');
             const storedUserId = await AsyncStorage.getItem('id');
-            const fetchedToken = await auth().currentUser.getIdToken();
+            const fetchedToken = await auth.currentUser.getIdToken();
 
             setHouseholdId(storedHouseholdId);
             setUserId(storedUserId);
@@ -41,7 +42,6 @@ const UserHomePage = ({navigation}) => {
         }
     }, [householdId, token]);
 
-
     const fetchUserName = async() => {
         try {
             const res = await fetch(`http://192.168.1.108:8000/users/${userId}`, {
@@ -55,6 +55,7 @@ const UserHomePage = ({navigation}) => {
                 Alert.alert(json.error);
             }
             else{
+                console.log('Username: ', json.name);
                 setUserName(json.name);
             }
         }
@@ -79,6 +80,7 @@ const UserHomePage = ({navigation}) => {
                 setWeeklyLimit(json.weeklyLimit);
                 setMonthlyLimit(json.monthlyLimit);
                 setHouseholdName(json.householdName);
+                console.log('Limits:', json.weeklyLimit, json.monthlyLimit);
             }
         }catch(error) {
             console.error(error);
@@ -150,8 +152,8 @@ const styles=StyleSheet.create({
     household: {
         justifyContent:'center',
         alignItems:'center',
-        padding:10,
-        width: '70%',
+        paddingHorizontal:30,
+        paddingVertical:15,
         borderRadius: 20,
         backgroundColor:'#4ADEDE'
     },

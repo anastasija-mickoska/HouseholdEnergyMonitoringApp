@@ -1,4 +1,3 @@
-//all firestore operations here
 const { db } = require('./config/firebaseConfig');
 
 const getAllHouseholds = async () => {
@@ -27,10 +26,26 @@ const getHouseholdById = async(id) => {
     }
 };
 
+const getHouseholdByName = async(name) => {
+    try {
+        const household = await db.collection('Households').where('householdName', '==', name).get();
+        if (household.empty) {
+            throw new Error('Household with this name does not exist!');
+        }
+        const householdId = household.docs[0].id;
+        return householdId;
+    }
+    catch(error) {
+        console.error('Error finding household by name!', error);
+        throw error;
+    }
+};
+
 const createHousehold = async(household) => {
     try {
         const doc = await db.collection('Households').add(household);
         console.log('Created document with ID ', doc.id);
+        return doc.id; 
     }
     catch(error) {
         console.error('Error creating household!', error);
@@ -38,16 +53,16 @@ const createHousehold = async(household) => {
     }
 };
 
-const joinHousehold = async(householdId, userId, code, name) => {
+const joinHousehold = async(householdId, userId, householdCode, householdName) => {
     try {
         const doc = await db.collection('Households').doc(householdId).get();
-        if(!doc.exists()) {
+        if(!doc.exists) {
             throw new Error('Household with this ID does not exist!');
         }
         const data = doc.data();
-        const householdCode = data.householdCode;
-        const householdName = data.householdName;
-        if(name != householdName || householdCode != code) {
+        const code = data.householdCode;
+        const name = data.householdName;
+        if(name != householdName || code != householdCode) {
             throw new Error('Invalid household data!');
         }
         const updatedMembers = data.members?.includes(userId)
@@ -55,6 +70,7 @@ const joinHousehold = async(householdId, userId, code, name) => {
         : [...(data.members || []), userId];
 
         await db.collection('Households').doc(householdId).update({members: updatedMembers});
+        await db.collection('users').doc(userId).update({householdId: householdId});
     }
     catch(error) {
         console.error('Error joining household!', error);
@@ -77,7 +93,7 @@ const getAllUsers = async() => {
 const getUserById = async (id) => {
     try {
         const user = await db.collection('users').doc(id).get();
-        if(!user.exists()) {
+        if(!user.exists) {
             throw new Error('User with this ID does not exist!');
         }
         return {id:user.id, ...user.data()};
@@ -88,6 +104,21 @@ const getUserById = async (id) => {
     }
 
 };
+
+const setUserHousehold = async(id, householdId) => {
+    try {
+        const doc = await db.collection('users').doc(id).get();
+        if(!doc.exists) {
+            throw new Error('User with this ID does not exist!');
+        }
+        await db.collection('users').doc(id).update({householdId: householdId});
+    }
+    catch(error) {
+        console.error('Error setting household!', error);
+        throw error;
+    }
+};
+
 
 const getElectricityMeterUsagesForHousehold = async(householdId) => {
     try {
@@ -148,22 +179,20 @@ const addApplianceEnergyUsage = async(data) => {
 };
 
 const changeUsageLimits = async (householdId, weekly, monthly) => {
-  try {
-    const household = await getHouseholdById(householdId); 
-    const newData = {
-      ...household,
-      weeklyLimit: weekly,
-      monthlyLimit: monthly
-    };
-    await db.collection('Households').doc(householdId).set(newData);
-    return newData;
-  } 
-  catch (error) {
-    console.error('Error changing usage limits!', error);
-    throw error;
-  }
+    try {
+        const limitsToUpdate = {};
+        if (weekly !== undefined) limitsToUpdate.weeklyLimit = weekly;
+        if (monthly !== undefined) limitsToUpdate.monthlyLimit = monthly;
+        if (Object.keys(limitsToUpdate).length === 0) {
+            throw new Error('No valid limits provided for update.');
+        }
+        await db.collection('Households').doc(householdId).update(limitsToUpdate);
+    } 
+    catch (error) {
+        console.error('Error changing usage limits!', error);
+        throw error;
+    }
 };
-
 
 const getNotificationsForHousehold = async(householdId) => {
     try{
@@ -175,11 +204,27 @@ const getNotificationsForHousehold = async(householdId) => {
         console.error('Error getting notifications for this household!', error);
         throw error;
     }
+};
+
+const getAppliances = async() => {
+    try {
+        const appliancesSnapshot = await db.collection('Appliance Consumption').get();
+        const appliances = appliancesSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        return appliances;
+    }
+    catch(error) {
+        console.error('Error getting appliances!', error);
+        throw error;
+    }
 }
 
 module.exports = {
     getAllHouseholds,
     getHouseholdById,
+    getHouseholdByName,
     getAllUsers,
     getUserById,
     changeUsageLimits,
@@ -191,4 +236,6 @@ module.exports = {
     createHousehold,
     addApplianceEnergyUsage,
     addElectricityMeterUsage,
+    setUserHousehold,
+    getAppliances 
 };

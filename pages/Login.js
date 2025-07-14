@@ -4,7 +4,7 @@ import CustomForm from '../components/CustomForm';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, getDoc } from 'firebase/firestore';
-import { db, auth } from '../backend/config/firebaseConfig';
+import {auth, db} from '../firebase';
 
 const Login = ({navigation}) => {
   const fields = [
@@ -23,18 +23,25 @@ const Login = ({navigation}) => {
       }
       const { role, name, householdId } = userDocSnap.data();
       await AsyncStorage.multiSet([
-        ['role', role],
-        ['name', name],
-        ['email', email],
-        ['householdId', (householdId != null ? householdId : '')],
-        ['id', user.uid]
+          ['role', role],
+          ['name', name],
+          ['email', email],
+          ['householdId', householdId ?? 'null'],
+          ['id', user.uid]
       ]);
+      console.log('User details: ', role, name, email, householdId, user.uid);
       Alert.alert('Logged in as:', user.email);
       if (!householdId) {
           navigation.navigate('Welcome');
-      } else {
-          navigation.navigate('Home');
       }
+      else {
+        if(role == 'Admin') {
+          navigation.navigate('Admin Home');
+        }
+        else if(role == 'User') {
+          navigation.navigate('User Home');
+        }
+      } 
     } catch (error) {
       Alert.alert("Login failed", error.message);
     }

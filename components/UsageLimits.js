@@ -1,29 +1,60 @@
-import { TouchableOpacity, StyleSheet, Text, Image, View, TextInput } from "react-native";
+import { TouchableOpacity, StyleSheet, Text, Image, View, TextInput, Alert } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useState, useEffect } from "react";
 
-const UsageLimits = ({weeklyLimit, monthlyLimit, handleSave}) => {
-    return (
-        <View style={styles.container}>
-            <Text style={styles.label}>Change weekly limit here:</Text>
-            <TextInput style={styles.input} value={weeklyLimit} keyboardType="numeric"/>
-            <Text style={styles.label}>Change monthly limit here:</Text>
-            <TextInput style={styles.input} value={monthlyLimit} keyboardType="numeric"/>
-            <TouchableOpacity style={styles.button} onPress={handleSave}>
-                <LinearGradient
-                    colors={['#4ADEDE', '#1AA7EC']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.buttonStyle}>
-                    <Text style={styles.buttonText}>Save</Text>
-                    <Image source={require('../assets/images/add.png')}/>
-                </LinearGradient>
-            </TouchableOpacity>
-        </View>
-    );
-}
+const UsageLimits = ({ weeklyLimit, monthlyLimit, onSave }) => {
+  const [localWeeklyLimit, setLocalWeeklyLimit] = useState(weeklyLimit?.toString() ?? '');
+  const [localMonthlyLimit, setLocalMonthlyLimit] = useState(monthlyLimit?.toString() ?? '');
+
+  useEffect(() => {
+    setLocalWeeklyLimit(weeklyLimit?.toString() ?? '');
+    setLocalMonthlyLimit(monthlyLimit?.toString() ?? '');
+  }, [weeklyLimit, monthlyLimit]);
+
+  const onSavePress = () => {
+    const weeklyNum = parseFloat(localWeeklyLimit);
+    const monthlyNum = parseFloat(localMonthlyLimit);
+    if (isNaN(weeklyNum) || isNaN(monthlyNum)) {
+      Alert.alert('Please enter valid numbers');
+      return;
+    }
+    onSave({
+        weeklyLimit: weeklyNum,
+        monthlyLimit: monthlyNum
+    });
+  };
+
+  return (
+    <View style={styles.container}>
+        <Text style={styles.label}>Change weekly limit here:</Text>
+        <TextInput
+            style={styles.input}
+            value={localWeeklyLimit}
+            onChangeText={setLocalWeeklyLimit}
+            keyboardType="numeric"
+        />
+        <Text style={styles.label}>Change monthly limit here:</Text>
+        <TextInput
+            style={styles.input}
+            value={localMonthlyLimit}
+            onChangeText={setLocalMonthlyLimit}
+            keyboardType="numeric"
+        />
+        <TouchableOpacity style={styles.button} onPress={onSavePress}>
+            <LinearGradient
+                colors={['#4ADEDE', '#1AA7EC']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.buttonStyle}>
+                <Text style={styles.buttonText}>Save</Text>
+                <Image source={require('../assets/images/add.png')}/>
+            </LinearGradient>
+        </TouchableOpacity>
+    </View>
+  );
+};
 
 export default UsageLimits;
-
 
 const styles = StyleSheet.create({
     container: {

@@ -20,10 +20,19 @@ const CustomForm = ({title, registerQuestion, fields, buttonText, buttonIcon, on
     };
 
     const handleDateChange = (name, event, selectedDate) => {
-        if (selectedDate) {
-        handleChange(name, selectedDate.toISOString().split('T')[0]); 
-        }
         setShowDatePickers(prev => ({ ...prev, [name]: false }));
+
+        if (event.type !== 'set' || !selectedDate) return;
+
+        const fieldType = fields.find(f => f.name === name)?.type;
+
+        if (fieldType === 'date') {
+            handleChange(name, selectedDate.toISOString().split('T')[0]); // YYYY-MM-DD
+        } else if (fieldType === 'time') {
+            const hours = selectedDate.getHours().toString().padStart(2, '0');
+            const minutes = selectedDate.getMinutes().toString().padStart(2, '0');
+            handleChange(name, `${hours}:${minutes}`); // Store only HH:MM
+        }
     };
 
     const handleSubmit = () => {
@@ -81,30 +90,24 @@ const CustomForm = ({title, registerQuestion, fields, buttonText, buttonIcon, on
             return (
               <View>
                 <TouchableOpacity
-                  onPress={() => setShowDatePickers(prev => ({ ...prev, [field.name]: true }))}
-                  style={styles.input}
-                >
-                  <Text style={{color:'rgba(0,0,0,0.40)'}}>
-                    {formData[field.name]
-                      ? new Date(formData[field.name]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                      : 'Select a time...'}
-                  </Text>
+                    onPress={() => setShowDatePickers(prev => ({ ...prev, [field.name]: true }))}
+                    style={styles.input}>
+                    <Text style={{ color: 'rgba(0,0,0,0.40)' }}>
+                        {formData[field.name] || 'Select a time...'}
+                    </Text>
                 </TouchableOpacity>
-
                 {showDatePickers[field.name] && (
-                  <DateTimePicker
-                    value={formData[field.name] ? new Date(formData[field.name]) : new Date()}
-                    mode="time"
-                    is24Hour={true}
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    onChange={(event, selectedTime) => {
-                      if (selectedTime) {
-                        handleDateChange(field.name, event, selectedTime);
-                      } else {
-                        setShowDatePickers(prev => ({ ...prev, [field.name]: false }));
-                      }
-                    }}
-                  />
+                    <DateTimePicker
+                        value={formData[field.name] ? new Date(formData[field.name]) : new Date()}
+                        mode="time"
+                        is24Hour={true}
+                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                        onChange={(event, selectedTime) => {
+                            setShowDatePickers(prev => ({ ...prev, [field.name]: false }));
+                            if (event.type === 'set' && selectedTime) {
+                                handleDateChange(field.name, event, selectedTime);
+                            }
+                        }}/>
                 )}
               </View>
             );

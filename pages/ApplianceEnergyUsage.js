@@ -3,11 +3,11 @@ import CustomForm from '../components/CustomForm';
 import PageLayout from '../components/PageLayout';
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import auth from '@react-native-firebase/auth';
+import { auth } from '../firebase';
 
 const ApplianceEnergyUsage = ({ navigation }) => {
     const fields = [
-        { name: 'appliance', label: 'Appliance', type: 'picker', placeholder: "Select appliance from below:", required: true },
+        { name: 'appliance', label: 'Appliance', type: 'picker', options: appliances, placeholder: "Select appliance from below:", required: true },
         { name: 'timeDuration', label: 'Time (hours)', type: 'number', placeholder: "Time (hours)", required: true },
         { name: 'date', label: 'Date', type: 'date', placeholder: "Date:", required: true },
         { name: 'startingTime', label: 'Starting time', type: 'time', placeholder: "Starting time:", required: true },
@@ -15,20 +15,38 @@ const ApplianceEnergyUsage = ({ navigation }) => {
 
     const [householdId, setHouseholdId] = useState(null);
     const [userId, setUserId] = useState(null);
+    const [role, setRole] = useState(null);
+    const [appliances, setAppliances] = useState([]);
+    const [token, setToken] = useState(null);
 
     useEffect(() => {
-        const loadIds = async () => {
+        const loadData = async () => {
             const storedUserId = await AsyncStorage.getItem('id');
             const storedHouseholdId = await AsyncStorage.getItem('householdId');
+            const storedRole = await AsyncStorage.getItem('role');
+            const fetchedtoken = await auth.currentUser.getIdToken();
             setUserId(storedUserId);
             setHouseholdId(storedHouseholdId);
+            setRole(storedRole);
+            setToken(fetchedtoken);
+            const res = await fetch('http://192.168.1.108:8000/appliances', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${fetchedtoken}`,
+                }
+            });
+            if (!res.ok) {
+                throw new Error('Failed to fetch appliances.');
+            }
+            const json = await res.json();
+            setAppliances(json.map(item => ({ label: item.applianceName, value: item.applianceName })));
         };
-        loadIds();
+        loadData();
     }, []);
+
 
     const handleSubmit = async ({ appliance, timeDuration, date, startingTime }) => {
         try {
-            const token = await auth().currentUser.getIdToken();
             const usageData = {
                 userId,
                 householdId,
@@ -53,7 +71,12 @@ const ApplianceEnergyUsage = ({ navigation }) => {
             const json = await res.json();
             if (json.message === 'Appliance energy usage added.') {
                 Alert.alert('Energy usage successfully added.\nTotal KWh consumption:\nTotal electricity cost:');
-                navigation.navigate('Home');
+                if(role === 'Admin') {
+                    navigation.navigate('Admin Home');
+                }
+                else if(role === 'User') {
+                    navigation.navigate('User Home');
+                }
             } else {
                 Alert.alert(json.error || 'Unknown error');
             }
@@ -68,7 +91,12 @@ const ApplianceEnergyUsage = ({ navigation }) => {
                 <CustomForm
                     title="Appliance Energy Usage Data"
                     registerQuestion={false}
-                    fields={fields}
+                    fields={[
+                        { name: 'appliance', label: 'Appliance', type: 'picker', options: appliances, placeholder: "Select appliance from below:", required: true },
+                        { name: 'timeDuration', label: 'Time (hours)', type: 'number', placeholder: "Time (hours)", required: true },
+                        { name: 'date', label: 'Date', type: 'date', placeholder: "Date:", required: true },
+                        { name: 'startingTime', label: 'Starting time', type: 'time', placeholder: "Starting time:", required: true },
+                    ]}
                     buttonText={"Submit"}
                     buttonIcon={"check"}
                     onSubmit={handleSubmit}

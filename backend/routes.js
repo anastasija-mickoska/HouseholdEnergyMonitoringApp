@@ -3,6 +3,7 @@ const router = express.Router();
 const { getAllHouseholds, 
     createHousehold, 
     getHouseholdById, 
+    getHouseholdByName,
     joinHousehold, 
     getAllUsers, 
     getUserById,
@@ -12,7 +13,9 @@ const { getAllHouseholds,
     addApplianceEnergyUsage, 
     addElectricityMeterUsage, 
     changeUsageLimits, 
-    getNotificationsForHousehold } = require('./firestoreService');
+    setUserHousehold,
+    getNotificationsForHousehold,
+    getAppliances } = require('./firestoreService');
 const authenticate = require('./config/auth');
 
 // router.get('/households', authenticate, getAllHouseholds); 
@@ -20,8 +23,8 @@ const authenticate = require('./config/auth');
 router.post('/households', authenticate, async(req,res)=> {
   try {
     const data = req.body;
-    await createHousehold(data);
-    res.status(201).json({message:'Household created.'});
+    const householdId = await createHousehold(data);
+    res.status(201).json({message:'Household created.', householdId: householdId});
   }
   catch(error){
     res.status(500).json({error:error.message});
@@ -32,21 +35,24 @@ router.get('/households/:householdId', authenticate, async(req,res)=> {
   try {
     const householdId = req.params.householdId;
     const household = await getHouseholdById(householdId);
-    res.json(household);
+    res.status(200).json(household);
   }
   catch(error){
-    res.status(500).json({error:error.message});
-  }  
+      console.error('Error in GET /households/:id', error);
+      res.status(500).json({ error: error.message });
+  }
 });
 
-router.patch('/households/:householdId', authenticate, async(req, res)=> {
+router.patch('/households/:householdName', authenticate, async(req, res)=> {
   try{
-    const householdId = req.params.householdId;
-    const {userId, householdName, householdCode} = req.body;
+    const householdName = req.params.householdName;
+    const {userId, householdCode} = req.body;
+    const householdId = await getHouseholdByName(householdName);
     await joinHousehold(householdId, userId, householdCode, householdName);
     res.status(200).json({message:'User added to household.'});
   }
   catch(error) {
+    console.error(error);
     res.status(500).json({error:error.message});
   }
 }); 
@@ -63,6 +69,18 @@ router.get('/users/:id', authenticate, async(req, res)=> {
     res.status(500).json({error:error.message});
   }
 }); 
+
+router.patch('/users/:id', authenticate, async(req,res) => {
+  try {
+    const id = req.params.id;
+    const {householdId} = req.body;
+    await setUserHousehold(id, householdId);
+    res.status(200).json({message:'Household attached to user.'});
+  }
+  catch(error) {
+    res.status(500).json({error: error.message});
+  }
+});
 
 router.get('/electricityMeterUsages/:householdId', authenticate, async(req,res)=> {
   try{
@@ -115,9 +133,9 @@ router.post('/applianceEnergyUsages', authenticate, async(req,res)=> {
 
 router.patch('/households/:householdId/limits', authenticate, async(req, res) => {
   try {
-    const {weekly, monthly} = req.body;
+    const {weeklyLimit, monthlyLimit} = req.body;
     const householdId = req.params.householdId;
-    await changeUsageLimits(householdId, weekly, monthly);
+    await changeUsageLimits(householdId, weeklyLimit, monthlyLimit);
     res.status(200).json({message: 'Limits saved.'});
   }
   catch(error){
@@ -134,6 +152,16 @@ router.get('/notifications/:householdId', authenticate, async(req,res) => {
   catch(error){
     res.status(500).json({error:error.message});
   }  
+});
+
+router.get('/appliances', authenticate, async (req, res) => {
+    try {
+        const appliances = await getAppliances();
+        res.status(200).json(appliances);
+    } catch (error) {
+        console.error('Error fetching appliances:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 module.exports = router;

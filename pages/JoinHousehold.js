@@ -1,8 +1,7 @@
 import { StyleSheet, View, Alert } from 'react-native';
 import CustomForm from '../components/CustomForm'; 
 import PageLayout from '../components/PageLayout';
-import { joinHousehold } from '../backend/firestoreService';
-import auth from '@react-native-firebase/auth';
+import { auth } from '../firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState, useEffect } from 'react';
 
@@ -11,7 +10,6 @@ const JoinHousehold = ({navigation}) => {
     { name: 'householdName', label: 'Household Name', type: 'text', placeholder: "Enter household name...", required: true },
     { name: 'householdCode', label: 'Household Code', type: 'text', placeholder: "Enter household code...", required: true },
   ];
-  const [householdId, setHouseholdId] = useState(null);
   const [userId, setUserId] = useState(null);
 
   useEffect(() => {
@@ -20,22 +18,17 @@ const JoinHousehold = ({navigation}) => {
       setUserId(storedUserId);
     };
     getUserId();
-    const getHouseholdId = async () => {
-      const storedHouseholdId = await AsyncStorage.getItem('householdId');
-      setHouseholdId(storedHouseholdId);
-    };
-    getHouseholdId();
   }, []);
 
   const handleJoin = async ({ householdName, householdCode }) => {
       try {
-        const token = auth().currentUser.getIdToken();
+        const token = await auth.currentUser.getIdToken();
         const householdData = {
-          userId: userId,
-          householdName: householdName, 
-          householdCode: householdCode
-        }
-        const res = await fetch(`http://192.168.1.108:8000/households/${householdId}`, {
+          userId,
+          householdCode,
+        };
+        console.log('Joining household:', userId, householdName, householdCode );
+        const res = await fetch(`http://192.168.1.108:8000/households/${encodeURIComponent(householdName)}`, {
           method:'PATCH',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -43,19 +36,20 @@ const JoinHousehold = ({navigation}) => {
           },
           body: JSON.stringify(householdData)
         });
+        if (!res.ok) {
+          const errJson = await res.json();
+          Alert.alert('Error', errJson.error || 'Unknown error');
+          return;
+        }
         const json = await res.json();
-        if(json.message && json.message == 'User added to household.') {
-          Alert.alert(json.message);
-          navigation.navigate('Home');
-        }
-        else {
-          Alert.alert(json.error);
-        }
+        Alert.alert(json.message);
+        navigation.navigate('User Home');
       }
       catch(error){
-        Alert.alert('Creating household failed!', error.message);
+        console.error(error.message);
+        Alert.alert('Joining household failed!', error.message);
       }
-  }
+  };
   return (
     <PageLayout navigation={navigation}>
       <View style={styles.container}>

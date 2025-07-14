@@ -5,7 +5,7 @@ import UsageComponent from '../components/UsageComponent';
 import CustomButton from '../components/CustomButton';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import auth from '@react-native-firebase/auth';
+import { auth } from '../firebase';
 
 const AdminHomePage = ({ navigation }) => {
     const [householdId, setHouseholdId] = useState(null);
@@ -13,14 +13,14 @@ const AdminHomePage = ({ navigation }) => {
     const [token, setToken] = useState(null);
     const [userName, setUserName] = useState('');
     const [householdName, setHouseholdName] = useState('');
-    const [weeklyLimit, setWeeklyLimit] = useState('');
-    const [monthlyLimit, setMonthlyLimit] = useState('');
+    const [weeklyLimit, setWeeklyLimit] = useState(null);
+    const [monthlyLimit, setMonthlyLimit] = useState(null);
 
     useEffect(() => {
         const initData = async () => {
             const storedHouseholdId = await AsyncStorage.getItem('householdId');
             const storedUserId = await AsyncStorage.getItem('id');
-            const fetchedToken = await auth().currentUser.getIdToken();
+            const fetchedToken = await auth.currentUser.getIdToken();
 
             setHouseholdId(storedHouseholdId);
             setUserId(storedUserId);
@@ -79,6 +79,7 @@ const AdminHomePage = ({ navigation }) => {
                 setWeeklyLimit(json.weeklyLimit);
                 setMonthlyLimit(json.monthlyLimit);
                 setHouseholdName(json.householdName);
+                console.log('Limits:', json.weeklyLimit, json.monthlyLimit);
             }
         }catch(error) {
             console.error(error);
@@ -106,9 +107,12 @@ const AdminHomePage = ({ navigation }) => {
                     <Text style={styles.householdName}>{householdName}</Text> 
                 </View>
                 <UsageComponent week={50} month={150} />
-                <WeeklyMonthlyInsight title={'Electricity cost'} texts={['This week', 'This month']} values={[1240, 4520]} />
+                <WeeklyMonthlyInsight title={'Electricity Cost'} texts={['This week', 'This month']} values={[1240, 4520]} />
                 <CustomButton text={'View Insights'} imgSource={"insights"} onPress={handleInsightsButton} />
-                <WeeklyMonthlyInsight title={'Usage Limits'} texts={['Weekly limit', 'Monthly limit']} values={[{weeklyLimit}, {monthlyLimit}]} />
+                <WeeklyMonthlyInsight title={'Usage Limits'} texts={['Weekly limit', 'Monthly limit']} values={[
+                    `${weeklyLimit ?? 0} KWh`,
+                    `${monthlyLimit ?? 0} KWh`
+                ]} />
                 <CustomButton text={'Manage Usage Limits'} imgSource={"edit"} onPress={handleUsageLimitsButton} />
                 <CustomButton text={'Add Energy Usage'} imgSource={"add"} onPress={handleAddButton}/>
             </View>
@@ -150,8 +154,8 @@ const styles=StyleSheet.create({
     household: {
         justifyContent:'center',
         alignItems:'center',
-        padding:10,
-        width: '70%',
+        paddingHorizontal:30,
+        paddingVertical:15,
         borderRadius: 20,
         backgroundColor:'#4ADEDE'
     },

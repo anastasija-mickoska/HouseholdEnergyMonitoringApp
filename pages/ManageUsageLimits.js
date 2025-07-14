@@ -1,92 +1,116 @@
 import PageLayout from "../components/PageLayout";
 import WeeklyMonthlyInsight from "../components/WeeklyMonthlyInsight";
 import UsageLimits from '../components/UsageLimits';
-import { Alert, StyleSheet, Text, View, ScrollView } from "react-native";
+import { Alert, StyleSheet, Text, ScrollView } from "react-native";
 import { useEffect, useState } from "react";
-import auth from '@react-native-firebase/auth';
+import { auth } from '../firebase';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ManageUsageLimits = ({navigation}) => {
-  const [householdId, setHouseholdId] = useState(null);
+    const [householdId, setHouseholdId] = useState(null);
+    const [weeklyLimit, setWeeklyLimit] = useState('0');  
+    const [monthlyLimit, setMonthlyLimit] = useState('0'); 
+    const [token, setToken] = useState(null);
+    const [role, setRole] = useState(null);
 
     useEffect(() => {
-        const getHouseholdId = async () => {
-        const storedHouseholdId = await AsyncStorage.getItem('householdId');
-        setHouseholdId(storedHouseholdId);
+        const loadData = async () => {
+            const storedHouseholdId = await AsyncStorage.getItem('householdId');
+            console.log('Stored household ID:', storedHouseholdId);
+            setHouseholdId(storedHouseholdId);
+            const token = await auth.currentUser.getIdToken();
+            setToken(token);
+            const storedRole = await AsyncStorage.getItem('role');
+            setRole(storedRole);
         };
-        getHouseholdId();
+        loadData();
     }, []);
 
-    const weeklyLimit = '';
-    const monthlyLimit = '';
-
-    const fetchUsageLimits = async() => {
-        const res = await fetch(`http://192.168.1.108:8000/households/${householdId}`, {
-            method:'GET',
-            headers: {
-                'Authorization':`Bearer ${token}`
+    useEffect(() => { 
+        const fetchUsageLimits = async () => {
+            console.log('Limits before fetching:', weeklyLimit, monthlyLimit);
+            try {
+                const res = await fetch(`http://192.168.1.108:8000/households/${householdId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const json = await res.json();
+                if (!json || json.error) {
+                    Alert.alert(json?.error || 'No household data found.');
+                    return;
+                }
+                setWeeklyLimit(json.weeklyLimit ?? 0);
+                setMonthlyLimit(json.monthlyLimit ?? 0);
+            } catch (error) {
+                console.error(error);
+                Alert.alert('Error fetching usage limits.', error.message);
             }
-        });
-        const json = await res.json();
-        if(json.error) {
-            Alert.alert(json.error);
+        };
+        if (householdId && token) {
+            fetchUsageLimits();
         }
-        else {
-            weeklyLimit = json.weeklyLimit;
-            monthlyLimit = json.monthlyLimit;
-        }
-    }
-    fetchUsageLimits();
+    }, [householdId, token]);
 
-    const saveLimits = async ({weekly, monthly}) => {
+    const saveLimits = async (newLimits) => {
+        setWeeklyLimit(newLimits.weeklyLimit.toString());
+        setMonthlyLimit(newLimits.monthlyLimit.toString());
         try {
-            const token = auth().currentUser.getIdToken();
-            const limits = {
-                weeklyLimit:weekly,
-                monthlyLimit:monthly
-            };
             const res = await fetch(`http://192.168.1.108:8000/households/${householdId}/limits`, {
-                method:'PATCH',
+                method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(limits)
+                body: JSON.stringify(newLimits) 
             });
             const json = await res.json();
-            if(json.message && json.message == 'Limits saved.') {
+            if (json.message && json.message === 'Limits saved.') {
                 Alert.alert('Limits saved successfully.');
-                navigation.navigate('Home');
+                if(role === 'Admin') {
+                    navigation.navigate('Admin Home');
+                }
+                else if(role === 'User') {
+                    navigation.navigate('User Home');
+                }
+            } else {
+                Alert.alert(json.error || 'Error saving limits.');
             }
-            else {
-                Alert.alert(json.error);
-            }
-        }
-        catch(error) {
+        } catch (error) {
             Alert.alert('Error saving data!', error.message);
         }
-    }
+    };
 
-    return(
+    return (
         <PageLayout navigation={navigation}>
-            <ScrollView contentContainerStyle={styles.container}>
+            <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
                 <Text style={styles.title}>Manage Usage Limits</Text>
-                <WeeklyMonthlyInsight texts={['Weekly limit', 'Monthly limit']} values={[`${weeklyLimit} KWh`,`${monthlyLimit} KWh`]}/>
-                <UsageLimits weeklyLimit={60} monthlyLimit={200} handleSave={saveLimits}/>
+                <WeeklyMonthlyInsight 
+                    title={'Usage Limits'}
+                    texts={['Weekly limit', 'Monthly limit']} 
+                    values={[
+                        `${weeklyLimit} KWh`,
+                        `${monthlyLimit} KWh`
+                    ]}/>
+                <UsageLimits 
+                    weeklyLimit={weeklyLimit} 
+                    monthlyLimit={monthlyLimit} 
+                    onSave={saveLimits} />
             </ScrollView>
-        </PageLayout> 
+        </PageLayout>
     );
 }
 
 export default ManageUsageLimits;
 
-const styles=StyleSheet.create({
+const styles = StyleSheet.create({
     container: {
         flexGrow:1,
         padding:20,
         flexDirection:'column',
-        justifyContent:'space-between',
-        alignItems:'center',
-        gap:20
+        justifyContent:'space-around',
+        alignItems:'center'
     },
     title: {
         color: '#1F2F98',

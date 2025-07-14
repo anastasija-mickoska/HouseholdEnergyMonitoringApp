@@ -32,18 +32,8 @@ SplashScreen.preventAutoHideAsync();
 
 const App = () => {
   const [fontsLoaded, setFontsLoaded] = useState(false);
-  const [role, setRole] = useState('');
 
   useEffect(() => {
-    async function loadRole() {
-      try {
-        const storedRole = await AsyncStorage.getItem('role');
-        setRole(storedRole);
-      } catch (error) {
-        console.error("Failed to load role:", error);
-      }
-    };
-    loadRole();
     async function loadFonts() {
       await Font.loadAsync({
         'Roboto Flex': require('./assets/RobotoFlex.ttf'),
@@ -71,7 +61,8 @@ const App = () => {
         <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="Login" component={Login} />
             <Stack.Screen name="Register" component={Register} />
-            <Stack.Screen name="Home" component={(role && role === 'Admin') ? AdminHomePage : UserHomePage} />
+            <Stack.Screen name="Admin Home" component={AdminHomePage} />
+            <Stack.Screen name="User Home" component={UserHomePage} />
             <Stack.Screen name="Insights" component={InsightsPage} />
             <Stack.Screen name="Add Usage" component={AddUsage} />
             <Stack.Screen name="Notifications" component={NotificationsList} />

@@ -3,17 +3,52 @@ import { LinearGradient } from 'expo-linear-gradient';
 import PageLayout from '../components/PageLayout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import  {useState, useEffect} from 'react';
+import {auth} from '../firebase';
 
 const WelcomePage = ({ navigation }) => {
   const [role, setRole] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [userName, setUserName] = useState(null);
+  const [token, setToken] = useState(null);
 
   useEffect(() => {
-    const getRole = async () => {
+    const loadData = async () => {
       const storedRole = await AsyncStorage.getItem('role');
+      const storedId = await AsyncStorage.getItem('id');
+      const fetchedToken = await auth.currentUser.getIdToken();
       setRole(storedRole);
+      setUserId(storedId);
+      setToken(fetchedToken);
     };
-    getRole();
+    loadData();
   }, []);
+
+  useEffect(() => {
+      if (userId && token) {
+          fetchUserName();
+      }
+  }, [userId, token]);
+
+  const fetchUserName = async() => {
+      try {
+          const res = await fetch(`http://192.168.1.108:8000/users/${userId}`, {
+              method:'GET',
+              headers: {
+                  'Authorization':`Bearer ${token}`
+              }
+          });
+          const json = await res.json();
+          if(json.error) {
+              Alert.alert(json.error);
+          }
+          else{
+              setUserName(json.name);
+          }
+      }
+      catch(error) {
+          console.error(error);
+      }
+  };
 
   const handlePress = () => {
     if(role === 'Admin') {
@@ -27,7 +62,7 @@ const WelcomePage = ({ navigation }) => {
   return (
     <PageLayout navigation={navigation}>
       <View style={styles.container}>
-        <Text style={styles.welcome}>Welcome, Anastasija!</Text>
+        <Text style={styles.welcome}>Welcome, {userName}!</Text>
 
         <View style={styles.view}>
           <Text style={styles.viewText}>

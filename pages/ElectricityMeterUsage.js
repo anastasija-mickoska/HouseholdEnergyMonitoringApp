@@ -2,7 +2,8 @@ import { StyleSheet, View, Alert } from 'react-native';
 import CustomForm from '../components/CustomForm'; 
 import PageLayout from '../components/PageLayout';
 import { useEffect, useState } from 'react';
-import auth from '@react-native-firebase/auth';
+import { auth } from '../firebase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ElectricityMeterUsage = ({navigation}) => {
     const fields = [
@@ -13,20 +14,23 @@ const ElectricityMeterUsage = ({navigation}) => {
 
   const [householdId, setHouseholdId] = useState(null);
   const [userId, setUserId] = useState(null);
+  const [role, setRole] = useState(null);
 
   useEffect(() => {
-      const loadIds = async () => {
+      const loadData = async () => {
           const storedUserId = await AsyncStorage.getItem('id');
           const storedHouseholdId = await AsyncStorage.getItem('householdId');
+          const storedRole = await AsyncStorage.getItem('role');
           setUserId(storedUserId);
           setHouseholdId(storedHouseholdId);
+          setRole(storedRole);
       };
-      loadIds();
+      loadData();
   }, []);
 
     const handleSubmit = async ({highTariff, lowTariff, electricityMeterSubmitDate}) => {
         try {
-          const token = auth().currentUser.getIdToken();
+          const token = await auth.currentUser.getIdToken();
           const usageData = {
             userId:userId,
             householdId: householdId,
@@ -52,7 +56,12 @@ const ElectricityMeterUsage = ({navigation}) => {
             //also here totalConsumption and totalCost should be calculated
             //modal instead of built-in alert for styling purposes
             Alert.alert('Energy usage successfully added. Total KWh consumption: Total electricity cost: ');
-            navigation.navigate('Home');
+            if(role === 'Admin') {
+                navigation.navigate('Admin Home');
+            }
+            else if(role === 'User') {
+                navigation.navigate('User Home');
+            }
           }
           else {
             Alert.alert(json.error || 'Unknown error');

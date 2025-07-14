@@ -1,8 +1,9 @@
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, StatusBar } from 'react-native';
 
 export default function AppHeader({ onMenuToggle }) {
   return (
     <View style={styles.header}>
+      <StatusBar backgroundColor="#1CA7EC" barStyle="light-content" />
       <TouchableOpacity onPress={onMenuToggle} style={styles.menu}>
         <Image source={require('../assets/images/navbar.png')} style={styles.icon}/>
       </TouchableOpacity>
@@ -13,11 +14,13 @@ export default function AppHeader({ onMenuToggle }) {
 const styles = StyleSheet.create({
   header: {
     width:'100%',
-    height: 60,
+    height: 100,
     backgroundColor: '#1CA7EC',
     flexDirection: 'row',
     paddingHorizontal: 15,
-    alignItems:'center'
+    alignItems:'flex-end',
+    justifyContent:'flex-start',
+    paddingVertical:20
   },
   menu: {
     width:25,

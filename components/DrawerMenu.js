@@ -1,4 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from 'react';
 
 const drawerRoutes = [
   { name: 'Home', img: require('../assets/images/home.png') },
@@ -9,6 +11,16 @@ const drawerRoutes = [
 ];
 
 export default function DrawerMenu({ navigation, closeDrawer }) {
+  const [role, setRole] = useState(null);
+
+  useEffect(()=> {
+    const getRole = async() => {
+      const storedRole = await AsyncStorage.getItem('role');
+      setRole(storedRole);
+    }
+    getRole();
+  }, []);
+
   return (
     <View style={styles.drawer}>
       {drawerRoutes.map((route) => (
@@ -16,7 +28,17 @@ export default function DrawerMenu({ navigation, closeDrawer }) {
           key={route.name}
           style={styles.drawerItem}
           onPress={() => {
-            navigation.replace(route.name);
+            if(route.name == 'Home') {
+              if(role == 'Admin') {
+                navigation.replace('Admin Home');
+              }
+              else if(role === 'User') {
+                navigation.replace('User Home');
+              }
+            }
+            else {
+              navigation.replace(route.name);
+            }
             closeDrawer();
           }}
         >

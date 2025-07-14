@@ -2,7 +2,7 @@ import { Alert,StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import CustomForm from '../components/CustomForm'; 
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import {auth, db} from '../backend/config/firebaseConfig';
+import {auth, db} from '../firebase';
 import { setDoc, doc } from 'firebase/firestore';
 
 const Register = ({navigation}) => {

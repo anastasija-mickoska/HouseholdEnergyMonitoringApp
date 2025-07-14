@@ -2,7 +2,7 @@ import PageLayout from "../components/PageLayout";
 import {View, StyleSheet, Text, ScrollView} from 'react-native';
 import Notification from '../components/Notification';
 import { useEffect, useState } from "react";
-import auth from '@react-native-firebase/auth';
+import { auth } from '../firebase';
 
 // const notificationsExample = [
 //     { id:1,text: "Some text", date:'08/07/2025'},
@@ -17,36 +17,44 @@ import auth from '@react-native-firebase/auth';
 //     { id:10,text: "Some text", date:'08/07/2025'},
 // ];
 
-const NotificationsList = ({navigation, notifications}) => {
+const NotificationsList = ({navigation}) => {
     const [householdId, setHouseholdId] = useState(null);
+    const [notifications, setNotifications] = useState(null);
+    const [token, setToken] = useState(null);
 
     useEffect(() => {
+        const getToken = async() => {
+            const fetchedToken = await auth.currentUser.getIdToken();
+            setToken(fetchedToken);
+        }
+        getToken();
         const getHouseholdId = async () => {
         const storedHouseholdId = await AsyncStorage.getItem('householdId');
         setHouseholdId(storedHouseholdId);
         };
         getHouseholdId();
-    }, []);
-
-    const token = auth().currentUser.getIdToken();
-    const notifications = [];
-
-    const fetchNotifications = async() => {
+        const fetchNotifications = async() => {
         const res = await fetch(`http://192.168.1.108:8000/notifications/${householdId}`, {
             method:'GET',
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
-        notifications = await res.json();
+        const results = await res.json();
+        console.log(results);
+        setNotifications(results);
     }
-    fetchNotifications();
+        fetchNotifications();
+    }, []);
 
-    if(notifications.length == 0) {
+
+
+
+    if(!notifications) {
         return (
             <PageLayout navigation={navigation}>
                 <View style={styles.container}>
-                    <Text style={styles.title}>Notifications.</Text>   
+                    <Text style={styles.title}>Notifications</Text>   
                     <Text style={styles.text}>No notifications available.</Text>       
                 </View>
             </PageLayout>            
