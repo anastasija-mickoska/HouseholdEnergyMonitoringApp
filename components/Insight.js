@@ -24,15 +24,15 @@ const styles = StyleSheet.create({
       color: '#F3F3F3',
       fontSize: 16,
       fontFamily: 'Roboto Flex',
-      fontWeight: 700,
+      fontWeight: 600,
       letterSpacing: 0.8,
     },
     value: {
       color: '#F3F3F3',
       fontSize: 24,
       fontFamily: 'Roboto Flex',
-      fontWeight: 600,
-      letterSpacing: 1.2,
+      fontWeight: 700,
+      letterSpacing: 0.60
     },
     blue: {
         backgroundColor:'#1CA7EC'

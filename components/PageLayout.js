@@ -40,7 +40,6 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     backgroundColor: '#F3F3F3',
-    padding:10
   },
   blurContainer: {
     ...StyleSheet.absoluteFillObject,
@@ -51,7 +50,7 @@ const styles = StyleSheet.create({
   },
   drawer: {
     position: 'absolute',
-    top: 100,
+    top: 80,
     left: 0,
     width: '100%',
     height: 'auto',

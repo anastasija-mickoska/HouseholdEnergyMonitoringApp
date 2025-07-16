@@ -61,7 +61,8 @@ const styles = StyleSheet.create({
         flexDirection:'column',
         justifyContent:'space-around',
         alignItems:'center',
-        width:'100%'
+        width:'100%',
+        marginVertical:20
     },
     label: {
         color: '#1F2F98',
@@ -78,8 +79,8 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         borderWidth: 1,
         borderColor: 'rgba(0, 0, 0, 0.20)',
+        marginVertical:5,
         textAlign:'center',
-        marginVertical:10,
         color: 'rgba(0, 0, 0, 0.50)'
     },
     button: {

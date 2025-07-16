@@ -15,6 +15,10 @@ const AdminHomePage = ({ navigation }) => {
     const [householdName, setHouseholdName] = useState('');
     const [weeklyLimit, setWeeklyLimit] = useState(null);
     const [monthlyLimit, setMonthlyLimit] = useState(null);
+    const [weeklyUsage, setWeeklyUsage] = useState(null);
+    const [monthlyUsage, setMonthlyUsage] = useState(null);
+    const [weeklyCost, setWeeklyCost] = useState(null);
+    const [monthlyCost, setMonthlyCost] = useState(null);
 
     useEffect(() => {
         const initData = async () => {
@@ -38,6 +42,7 @@ const AdminHomePage = ({ navigation }) => {
     useEffect(() => {
         if (householdId && token) {
             fetchUsageLimits();
+            fetchElectricityCostAndConsumption();
         }
     }, [householdId, token]);
 
@@ -85,7 +90,44 @@ const AdminHomePage = ({ navigation }) => {
             console.error(error);
         }
     };
-    //still to fetch electricity cost and usage
+    
+    const fetchElectricityCostAndConsumption = async() => {
+        try {
+            const res = await fetch(`http://192.168.1.108:8000/weeklyElectricityUsage/${householdId}`, {
+                method:'GET',
+                headers: {
+                    'Authorization':`Bearer ${token}`
+                }
+            });
+            const json = await res.json();
+            if(json.error) {
+                Alert.alert(json.error);
+            }
+            else {
+                setWeeklyCost(json.totalCost);
+                setWeeklyUsage(json.totalConsumption);
+                console.log('Weekly:', json.totalCost, json.totalConsumption);
+            }
+            const result = await fetch(`http://192.168.1.108:8000/monthlyElectricityUsage/${householdId}`, {
+                method:'GET',
+                headers: {
+                    'Authorization':`Bearer ${token}`
+                }
+            });
+            const jsonResult = await result.json();
+            if(jsonResult.error) {
+                Alert.alert(jsonResult.error);
+            }
+            else {
+                setMonthlyCost(jsonResult.totalCost);
+                setMonthlyUsage(jsonResult.totalConsumption);
+                console.log('Monthly:', jsonResult.totalCost, jsonResult.totalConsumption);
+            }
+        }
+        catch(error){
+            console.error(error);
+        }
+    };
 
     const handleInsightsButton = () => {
         navigation.navigate('Insights');
@@ -106,8 +148,8 @@ const AdminHomePage = ({ navigation }) => {
                 <View style={styles.household}>
                     <Text style={styles.householdName}>{householdName}</Text> 
                 </View>
-                <UsageComponent week={50} month={150} />
-                <WeeklyMonthlyInsight title={'Electricity Cost'} texts={['This week', 'This month']} values={[1240, 4520]} />
+                <UsageComponent week={`${weeklyUsage ?? 0}`} month={`${monthlyUsage ?? 0}`} />
+                <WeeklyMonthlyInsight title={'Electricity Cost'} texts={['This week', 'This month']} values={[`${weeklyCost ?? 0} den`, `${monthlyCost ?? 0} den`]} />
                 <CustomButton text={'View Insights'} imgSource={"insights"} onPress={handleInsightsButton} />
                 <WeeklyMonthlyInsight title={'Usage Limits'} texts={['Weekly limit', 'Monthly limit']} values={[
                     `${weeklyLimit ?? 0} KWh`,

@@ -2,11 +2,13 @@ import { TouchableOpacity, Text, View, StyleSheet } from "react-native";
 import { useState } from 'react';
 
 const ApplianceUsageInsight = ({title,applianceUsage, usagesByAppliance, totalCost}) => {
-    const [isActiveWeekly, setIsActiveWeekly] = useState(true);
-    const [isActiveMonthly, setIsActiveMonthly] = useState(false);
+    const [activePeriod, setActivePeriod] = useState('weekly');
 
-    const handlePress = () => {
-        //handle switching from weekly to monthly
+    const handlePressWeekly = () => {
+        setActivePeriod('weekly');
+    }
+    const handlePressMonthly = () => {
+        setActivePeriod('monthly');
     }
 
     return(
@@ -21,11 +23,11 @@ const ApplianceUsageInsight = ({title,applianceUsage, usagesByAppliance, totalCo
                 <Text style={styles.insights}>Total cost: {totalCost} den</Text>
             </View>
             <View style={styles.buttons}>
-                <TouchableOpacity style={isActiveWeekly ? styles.active : styles.button} onPress={handlePress}>
-                    <Text style={isActiveWeekly ? styles.activeText : styles.buttonText}>Weekly</Text>
+                <TouchableOpacity style={activePeriod === 'weekly' ? styles.active : styles.button} onPress={handlePressWeekly}>
+                    <Text style={activePeriod === 'weekly' ? styles.activeText : styles.buttonText}>Weekly</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={isActiveMonthly ? styles.active : styles.button} onPress={handlePress}>
-                    <Text style={isActiveMonthly ? styles.activeText : styles.buttonText}>Monthly</Text>
+                <TouchableOpacity style={activePeriod === 'monthly' ? styles.active : styles.button} onPress={handlePressMonthly}>
+                    <Text style={activePeriod === 'monthly' ? styles.activeText : styles.buttonText}>Monthly</Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -39,7 +41,7 @@ const styles = StyleSheet.create({
         flexDirection:'column',
         justifyContent:'space-between',
         alignItems:'center',
-        gap:10,
+        gap:20,
         backgroundColor: 'rgba(26, 167, 236, 0.10)',
         borderRadius:20,
         padding:30,
@@ -59,7 +61,6 @@ const styles = StyleSheet.create({
         alignItems:'center'
     },
     text: {
-        width: '70%',
         backgroundColor: '#4ADEDE',
         borderRadius: 20,
         padding:10,
@@ -74,37 +75,37 @@ const styles = StyleSheet.create({
         alignItems:'center'
     },
     buttons: {
-        width:'70%',
-        justifyContent:'space-between',
+        justifyContent:'space-around',
         flexDirection:'row',
-        alignItems:'center'
+        alignItems:'center',
+        gap:30
     },
     button: {
-        width: '40%',
-        height: 20,
         backgroundColor: '#F3F3F3',
         borderRadius: 20,
         alignItems:'center',
-        justifyContent:'center'
+        justifyContent:'center',
+        paddingHorizontal:20,
+        paddingVertical:5
     },
     active: {
-        width: '40%',
-        height: 20,
         borderRadius: 20,
         backgroundColor:'#1AA7EC',
         alignItems:'center',
-        justifyContent:'center'
+        justifyContent:'center',
+        paddingHorizontal:20,
+        paddingVertical:5
     },
     buttonText: {
         color: '#1F2F98',
-        fontSize: 10,
+        fontSize: 16,
         fontFamily: 'Roboto Flex',
         fontWeight: 500,
         letterSpacing: 0.5,
     },
     activeText: {
         color: '#F3F3F3',
-        fontSize: 10,
+        fontSize: 16,
         fontFamily: 'Roboto Flex',
         fontWeight: 500,
         letterSpacing: 0.5,    

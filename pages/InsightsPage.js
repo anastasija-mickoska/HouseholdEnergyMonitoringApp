@@ -5,24 +5,36 @@ import {Text, StyleSheet, View, ScrollView} from 'react-native';
 import CustomButton from '../components/CustomButton';
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { auth } from '../firebase'; 
 
 const usages = [];
 
 const InsightsPage = ({navigation}) => {
     const [role, setRole] = useState(null);
+    const [householdId, setHouseholdId] = useState(null);
+    const [userId, setUserId] = useState(null);
+    const [token, setToken] = useState(null);
+
     useEffect(()=> {
-        const getUserRole = async() => {
+        const loadData = async() => {
             const storedRole = await AsyncStorage.getItem('role');
+            const storedUserId = await AsyncStorage.getItem('id');
+            const storedHouseholdId = await AsyncStorage.getItem('householdId');
+            const fetchedToken = await auth.currentUser.getIdToken();
             setRole(storedRole);
+            setHouseholdId(storedHouseholdId);
+            setToken(fetchedToken);
+            setUserId(storedUserId);
         }
-        getUserRole();
-    }, [])
+        loadData();
+    }, []);
+
     return(
         <PageLayout navigation={navigation}>
             <ScrollView contentContainerStyle={styles.container}>
                 <Text style={styles.title}>Overview</Text>
                 <View style={styles.mainContent}>
-                    <ElectricityMeterInsight lowTariff={24} highTariff={26} totalCost={1500}/>
+                    <ElectricityMeterInsight/>
                     { role == 'Admin' &&  
                         <ApplianceUsageInsight title={'Appliance Usage Data'} applianceUsage={24} usagesByAppliance={usages} totalCost={540}/> }
                     <ApplianceUsageInsight title={'Your Appliance Usage'} applianceUsage={15} usagesByAppliance={usages} totalCost={300}/>

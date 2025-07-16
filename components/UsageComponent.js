@@ -4,7 +4,7 @@ import { View, Text, StyleSheet} from 'react-native';
 const UsageComponent = ({week, month}) => {
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Current Usage</Text>
+            <Text style={styles.title}>Current Electricity Usage</Text>
             <View style={styles.usage}>
                 <View style={styles.weekMonth}>
                     <Text style={styles.text}>This week</Text>
@@ -33,7 +33,7 @@ const styles=StyleSheet.create({
     },
     title: {
         color: '#1F2F98',
-        fontSize: 24,
+        fontSize: 22,
         fontFamily: 'Roboto Flex',
         fontWeight: '700',
         letterSpacing: 1.2,
@@ -44,13 +44,14 @@ const styles=StyleSheet.create({
         alignItems:'center'
     },
     weekMonth: {
-        width: 140,
-        height: 140,
         backgroundColor: '#1CA7EC',
         borderRadius: 20,
+        paddingVertical:20,
+        paddingHorizontal:10,
         flexDirection:'column',
-        justifyContent:'space-around',
+        justifyContent:'space-evenly',
         alignItems:'center',
+        gap:30,
         marginHorizontal: 10,
         marginVertical:20
     },
@@ -58,14 +59,14 @@ const styles=StyleSheet.create({
         color: '#F3F3F3',
         fontSize: 16,
         fontFamily: 'Roboto Flex',
-        fontWeight: '700',
+        fontWeight: '600',
         letterSpacing: 0.8
     },
     number: {
         color: '#FFFFFF',
-        fontSize: 24,
+        fontSize: 20,
         fontFamily: 'Roboto Flex',
-        fontWeight: '600',
-        letterSpacing: 1.2
+        fontWeight: '700',
+        letterSpacing: 0.60
     }
 });

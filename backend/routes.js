@@ -15,8 +15,15 @@ const { getAllHouseholds,
     changeUsageLimits, 
     setUserHousehold,
     getNotificationsForHousehold,
-    getAppliances } = require('./firestoreService');
+    getAppliances,
+    getElectricityPrices,
+    getMonthlyElectricityCostAndConsumption,
+    getWeeklyApplianceUsageByUser,
+    getMonthlyApplianceUsageByUser,
+    getWeeklyElectricityCostAndConsumption
+ } = require('./firestoreService');
 const authenticate = require('./config/auth');
+const { Timestamp } = require('firebase-admin/firestore');
 
 // router.get('/households', authenticate, getAllHouseholds); 
 
@@ -111,8 +118,15 @@ router.get('/applianceEnergyUsages', authenticate, async (req, res) => {
 
 router.post('/electricityMeterUsages', authenticate, async(req,res)=> {
   try {
-    const data = req.body;
-    await addElectricityMeterUsage(data);
+    const { userId, householdId, highTariff, lowTariff, date } = req.body;
+    const usageData = {
+    userId,
+    householdId,
+    highTariff,
+    lowTariff,
+    date: Timestamp.fromDate(new Date(date)) 
+    };
+    await addElectricityMeterUsage(usageData);
     res.status(201).json({message:'Electricity meter usage added.'});
   }
   catch(error){
@@ -122,8 +136,16 @@ router.post('/electricityMeterUsages', authenticate, async(req,res)=> {
 
 router.post('/applianceEnergyUsages', authenticate, async(req,res)=> {
   try {
-    const data = req.body;
-    await addApplianceEnergyUsage(data);
+    const {userId, householdId, appliance, timeDuration, date, startingTime} = req.body;
+    const usageData = {
+      userId,
+      householdId,
+      appliance,
+      timeDuration,
+      startingTime,
+      date: Timestamp.fromDate(new Date(date))
+    };
+    await addApplianceEnergyUsage(usageData);
     res.status(201).json({message:'Appliance energy usage added.'});
   }
   catch(error){
@@ -160,6 +182,54 @@ router.get('/appliances', authenticate, async (req, res) => {
         res.status(200).json(appliances);
     } catch (error) {
         console.error('Error fetching appliances:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/weeklyElectricityUsage/:householdId', authenticate, async(req,res) => {
+    try {
+        const householdId = req.params.householdId;
+        const data = await getWeeklyElectricityCostAndConsumption(householdId);
+        res.json(data);
+    }
+    catch (error) {
+        console.error('Error getting weekly electricity usage:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/monthlyElectricityUsage/:householdId', authenticate, async(req,res) => {
+    try {
+        const householdId = req.params.householdId;
+        const data = await getMonthlyElectricityCostAndConsumption(householdId);
+        res.json(data);
+    }
+    catch (error) {
+        console.error('Error getting monthly electricity usage:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/weeklyApplianceUsage/:userId', authenticate, async(req,res) => {
+    try {
+        const userId = req.params.userId;
+        const data = await getWeeklyApplianceUsageByUser(userId);
+        res.json(data);
+    }
+    catch (error) {
+        console.error('Error getting weekly appliance usage for user :', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/monthlyApplianceUsage/:userId', authenticate, async(req,res) => {
+    try {
+        const userId = req.params.userId;
+        const data = await getMonthlyApplianceUsageByUser(userId);
+        res.json(data);
+    }
+    catch (error) {
+        console.error('Error getting monthly appliance usage for user :', error);
         res.status(500).json({ error: error.message });
     }
 });

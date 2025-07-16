@@ -34,9 +34,9 @@ const ElectricityMeterUsage = ({navigation}) => {
           const usageData = {
             userId:userId,
             householdId: householdId,
-            highTariff: highTariff,
-            lowTariff: lowTariff,
-            date: electricityMeterSubmitDate,
+            highTariff: Number(highTariff),
+            lowTariff: Number(lowTariff),
+            date: new Date(electricityMeterSubmitDate),
           };
           const res = await fetch('http://192.168.1.108:8000/electricityMeterUsages', {
             method:'POST',

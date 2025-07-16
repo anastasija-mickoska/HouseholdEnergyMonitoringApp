@@ -48,12 +48,12 @@ const ApplianceEnergyUsage = ({ navigation }) => {
     const handleSubmit = async ({ appliance, timeDuration, date, startingTime }) => {
         try {
             const usageData = {
-                userId,
-                householdId,
-                appliance,
-                timeDuration,
-                date,
-                startingTime
+                userId:userId,
+                householdId:householdId,
+                appliance:appliance,
+                timeDuration:Number(timeDuration),
+                date: new Date(date),
+                startingTime:startingTime
             };
             const res = await fetch('http://192.168.1.108:8000/applianceEnergyUsages', {
                 method: 'POST',

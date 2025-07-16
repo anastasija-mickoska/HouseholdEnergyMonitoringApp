@@ -16,6 +16,12 @@ const UserHomePage = ({navigation}) => {
     const [householdName, setHouseholdName] = useState('');
     const [weeklyLimit, setWeeklyLimit] = useState('');
     const [monthlyLimit, setMonthlyLimit] = useState('');
+    const [weeklyUsage, setWeeklyUsage] = useState(null);
+    const [monthlyUsage, setMonthlyUsage] = useState(null);
+    const [weeklyCost, setWeeklyCost] = useState(null);
+    const [monthlyCost, setMonthlyCost] = useState(null);
+    // const [weeklyApplianceUsage, setWeeklyApplianceUsage] = useState(null);
+    // const [monthlyApplianceUsage, setMonthlyApplianceUsage] = useState(null);
 
     useEffect(() => {
         const initData = async () => {
@@ -39,6 +45,7 @@ const UserHomePage = ({navigation}) => {
     useEffect(() => {
         if (householdId && token) {
             fetchUsageLimits();
+            fetchElectricityCostAndConsumption();
         }
     }, [householdId, token]);
 
@@ -87,7 +94,68 @@ const UserHomePage = ({navigation}) => {
         }
     };
 
-    //still to fetch electricity cost and usage
+        
+    const fetchElectricityCostAndConsumption = async() => {
+        try {
+            const res = await fetch(`http://192.168.1.108:8000/weeklyElectricityUsage/${householdId}`, {
+                method:'GET',
+                headers: {
+                    'Authorization':`Bearer ${token}`
+                }
+            });
+            const json = await res.json();
+            if(json.error) {
+                Alert.alert(json.error);
+            }
+            else {
+                setWeeklyCost(json.totalCost);
+                setWeeklyUsage(json.totalConsumption);
+                console.log('Weekly:', json.totalCost, json.totalConsumption);
+            }
+            const result = await fetch(`http://192.168.1.108:8000/monthlyElectricityUsage/${householdId}`, {
+                method:'GET',
+                headers: {
+                    'Authorization':`Bearer ${token}`
+                }
+            });
+            const jsonResult = await result.json();
+            if(jsonResult.error) {
+                Alert.alert(jsonResult.error);
+            }
+            else {
+                setMonthlyCost(jsonResult.totalCost);
+                setMonthlyUsage(jsonResult.totalConsumption);
+                console.log('Monthly:', jsonResult.totalCost, jsonResult.totalConsumption);
+            }
+        }
+        catch(error){
+            console.error(error);
+        }
+    };
+
+
+    //this to be implemented after data has been calculated in service
+    // const fetchApplianceUsageForUser = async() => {
+    //     try {
+    //         const res = await fetch(`http://192.168.1.108:8000/weeklyApplianceUsage/${userId}`, {
+    //             method:'GET',
+    //             headers: {
+    //                 'Authorization':`Bearer ${token}`
+    //             }
+    //         });
+    //         const json = await res.json();
+    //         if(json.error) {
+    //             Alert.alert(json.error);
+    //         }
+    //         else {
+    //             setWeeklyApplianceUsage(json.totalCost);
+    //             setWeeklyUsage(json.totalConsumption);
+    //         }
+    //     }
+    //     catch(error){
+    //         console.error(error);
+    //     }
+    // };
 
 
     const handleAddButton = () => {
@@ -107,11 +175,11 @@ const UserHomePage = ({navigation}) => {
                     <View style={styles.household}>
                         <Text style={styles.householdName}>{householdName}</Text> 
                     </View>
-                    <UsageComponent week={50} month={150}/>
+                    <UsageComponent week={`${weeklyUsage ?? 0}`} month={`${monthlyUsage ?? 0}`} />
                     <Limits week={weeklyLimit} month={monthlyLimit}/>
-                    <WeeklyMonthlyInsight title={'Your Usage'} texts={['This Week', 'This Month']} values={[15,85]}/>
+                    <WeeklyMonthlyInsight title={'Your Appliance Usage'} texts={['This Week', 'This Month']} values={[15,85]}/>
                     <CustomButton text={'View Insights'} imgSource={"insights"} onPress={handleInsightsButton}/>
-                    <WeeklyMonthlyInsight title={'Electricity cost'} texts={['This week', 'This month']} values={[1240,4520]}/>
+                    <WeeklyMonthlyInsight title={'Electricity Cost'} texts={['This week', 'This month']} values={[`${weeklyCost ?? 0} den`, `${monthlyCost ?? 0} den`]} />
                     <CustomButton text={'Add Energy Usage'} imgSource={"add"} onPress={handleAddButton}/>
                 </View>
             </ScrollView>

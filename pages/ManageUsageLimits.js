@@ -117,6 +117,7 @@ const styles = StyleSheet.create({
         fontSize: 32,
         fontFamily: 'Roboto Flex',
         fontWeight: '700',
-        letterSpacing: 1.6
+        letterSpacing: 1.6,
+        marginBottom: 30
     }
 });
