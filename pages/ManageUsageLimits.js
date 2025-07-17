@@ -16,7 +16,6 @@ const ManageUsageLimits = ({navigation}) => {
     useEffect(() => {
         const loadData = async () => {
             const storedHouseholdId = await AsyncStorage.getItem('householdId');
-            console.log('Stored household ID:', storedHouseholdId);
             setHouseholdId(storedHouseholdId);
             const token = await auth.currentUser.getIdToken();
             setToken(token);
@@ -28,7 +27,6 @@ const ManageUsageLimits = ({navigation}) => {
 
     useEffect(() => { 
         const fetchUsageLimits = async () => {
-            console.log('Limits before fetching:', weeklyLimit, monthlyLimit);
             try {
                 const res = await fetch(`http://192.168.1.108:8000/households/${householdId}`, {
                     method: 'GET',

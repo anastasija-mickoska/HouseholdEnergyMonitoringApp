@@ -1,4 +1,4 @@
-import { StyleSheet, View, Alert } from 'react-native';
+import { StyleSheet, View, Alert, Modal, Text } from 'react-native';
 import CustomForm from '../components/CustomForm'; 
 import PageLayout from '../components/PageLayout';
 import { useEffect, useState } from 'react';
@@ -15,6 +15,9 @@ const ElectricityMeterUsage = ({navigation}) => {
   const [householdId, setHouseholdId] = useState(null);
   const [userId, setUserId] = useState(null);
   const [role, setRole] = useState(null);
+  const [totalKWh, setTotalKwh] = useState(null);
+  const [totalCost, setTotalCost] = useState(null);
+  const [modalVisibleElectricityMeter, setModalVisibleElectricityMeter] = useState(false);
 
   useEffect(() => {
       const loadData = async () => {
@@ -38,6 +41,7 @@ const ElectricityMeterUsage = ({navigation}) => {
             lowTariff: Number(lowTariff),
             date: new Date(electricityMeterSubmitDate),
           };
+          //TODO: Check if there is already a same entry as this one
           const res = await fetch('http://192.168.1.108:8000/electricityMeterUsages', {
             method:'POST',
             headers: {
@@ -53,15 +57,18 @@ const ElectricityMeterUsage = ({navigation}) => {
 
           const json = await res.json();
           if(json.message == 'Electricity meter usage added.') {
-            //also here totalConsumption and totalCost should be calculated
-            //modal instead of built-in alert for styling purposes
-            Alert.alert('Energy usage successfully added. Total KWh consumption: Total electricity cost: ');
-            if(role === 'Admin') {
-                navigation.navigate('Admin Home');
-            }
-            else if(role === 'User') {
-                navigation.navigate('User Home');
-            }
+            setTotalKwh(json.totalKWh);
+            setTotalCost(json.totalCost);
+            setModalVisibleElectricityMeter(true);
+            setTimeout(() => {
+                setModalVisibleElectricityMeter(false);
+                if(role === 'Admin') {
+                    navigation.navigate('Admin Home');
+                }
+                else if(role === 'User') {
+                    navigation.navigate('User Home');
+                }
+            }, 5000);
           }
           else {
             Alert.alert(json.error || 'Unknown error');
@@ -83,6 +90,17 @@ const ElectricityMeterUsage = ({navigation}) => {
           buttonIcon={"check"} 
           onSubmit = {handleSubmit}
         />
+        <Modal transparent={true} visible={modalVisibleElectricityMeter} animationType="fade">
+          <View style={styles.modal}>
+              <View>
+                  <Text style={styles.modalText}>
+                      Electricity meter usage successfully added.{"\n"}
+                      Total consumption since last electricity meter reading: {totalKWh} KWh.{"\n"}
+                      Total estimated cost: {totalCost} den
+                  </Text>
+              </View>
+          </View>
+        </Modal>
       </View>
     </PageLayout>
   );
@@ -96,5 +114,21 @@ const styles = StyleSheet.create({
     width:'100%',
     padding:30
   },
+  modal: {
+      flex: 1,
+      width:'100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      padding:20,
+      marginTop:22
+  },
+  modalText: {
+      backgroundColor:'#4ADEDE',
+      color: '#F3F3F3',
+      padding: 20,
+      borderRadius: 10,
+      textAlign: 'center'
+  }
 });
 

@@ -27,7 +27,6 @@ const JoinHousehold = ({navigation}) => {
           userId,
           householdCode,
         };
-        console.log('Joining household:', userId, householdName, householdCode );
         const res = await fetch(`http://192.168.1.108:8000/households/${encodeURIComponent(householdName)}`, {
           method:'PATCH',
           headers: {

@@ -1,4 +1,4 @@
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View, Modal, Text } from 'react-native';
 import CustomForm from '../components/CustomForm'; 
 import PageLayout from '../components/PageLayout';
 import { useEffect, useState } from 'react';
@@ -6,18 +6,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../firebase';
 
 const ApplianceEnergyUsage = ({ navigation }) => {
-    const fields = [
-        { name: 'appliance', label: 'Appliance', type: 'picker', options: appliances, placeholder: "Select appliance from below:", required: true },
-        { name: 'timeDuration', label: 'Time (hours)', type: 'number', placeholder: "Time (hours)", required: true },
-        { name: 'date', label: 'Date', type: 'date', placeholder: "Date:", required: true },
-        { name: 'startingTime', label: 'Starting time', type: 'time', placeholder: "Starting time:", required: true },
-    ];
-
     const [householdId, setHouseholdId] = useState(null);
     const [userId, setUserId] = useState(null);
     const [role, setRole] = useState(null);
     const [appliances, setAppliances] = useState([]);
     const [token, setToken] = useState(null);
+    const [totalKWh, setTotalKwh] = useState(null);
+    const [totalCost, setTotalCost] = useState(null);
+    const [modalVisibleAppliance, setModalVisibleAppliance] = useState(false);
 
     useEffect(() => {
         const loadData = async () => {
@@ -47,14 +43,20 @@ const ApplianceEnergyUsage = ({ navigation }) => {
 
     const handleSubmit = async ({ appliance, timeDuration, date, startingTime }) => {
         try {
+            const [hours, minutes] = startingTime.split(':').map(Number);
+            const startingDateTime = new Date(date);
+            startingDateTime.setHours(hours);
+            startingDateTime.setMinutes(minutes);
+
             const usageData = {
-                userId:userId,
-                householdId:householdId,
-                appliance:appliance,
-                timeDuration:Number(timeDuration),
+                userId: userId,
+                householdId: householdId,
+                appliance: appliance,
+                timeDuration: Number(timeDuration),
                 date: new Date(date),
-                startingTime:startingTime
+                startingTime: startingDateTime 
             };
+            //TODO: Check if there is already a same entry as this one
             const res = await fetch('http://192.168.1.108:8000/applianceEnergyUsages', {
                 method: 'POST',
                 headers: {
@@ -70,13 +72,18 @@ const ApplianceEnergyUsage = ({ navigation }) => {
 
             const json = await res.json();
             if (json.message === 'Appliance energy usage added.') {
-                Alert.alert('Energy usage successfully added.\nTotal KWh consumption:\nTotal electricity cost:');
-                if(role === 'Admin') {
-                    navigation.navigate('Admin Home');
-                }
-                else if(role === 'User') {
-                    navigation.navigate('User Home');
-                }
+                setTotalKwh(json.totalKWh);
+                setTotalCost(json.totalCost);
+                setModalVisibleAppliance(true);
+                setTimeout(() => {
+                    setModalVisibleAppliance(false);
+                    if(role === 'Admin') {
+                        navigation.navigate('Admin Home');
+                    }
+                    else if(role === 'User') {
+                        navigation.navigate('User Home');
+                    }
+                }, 3000);
             } else {
                 Alert.alert(json.error || 'Unknown error');
             }
@@ -102,6 +109,17 @@ const ApplianceEnergyUsage = ({ navigation }) => {
                     onSubmit={handleSubmit}
                 />
             </View>
+            <Modal transparent={true} visible={modalVisibleAppliance} animationType="fade">
+                <View style={styles.modal}>
+                    <View>
+                        <Text style={styles.modalText}>
+                            Appliance usage successfully added.{"\n"}
+                            Total consumption: {totalKWh} KWh.{"\n"}
+                            Total cost: {totalCost} den
+                        </Text>
+                    </View>
+                </View>
+            </Modal>
         </PageLayout>
     );
 };
@@ -114,4 +132,20 @@ const styles = StyleSheet.create({
         padding: 30,
         width: '100%'
     },
+    modal: {
+        flex: 1,
+        width:'100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        padding:20,
+        marginTop:22
+    },
+    modalText: {
+        backgroundColor:'#4ADEDE',
+        color: '#F3F3F3',
+        padding: 20,
+        borderRadius: 20,
+        textAlign: 'center'
+    }
 });

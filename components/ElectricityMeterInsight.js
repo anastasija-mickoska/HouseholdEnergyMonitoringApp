@@ -52,7 +52,6 @@ const ElectricityMeterInsight = () => {
             else {
                 setWeeklyLimit(json.weeklyLimit);
                 setMonthlyLimit(json.monthlyLimit);
-                console.log('Limits:', json.weeklyLimit, json.monthlyLimit);
             }
         }catch(error) {
             console.error(error);
@@ -76,7 +75,6 @@ const ElectricityMeterInsight = () => {
                 setWeeklyUsage(json.totalConsumption);
                 setLowTariffWeekly(json.lowTariffConsumption);
                 setHighTariffWeekly(json.highTariffConsumption);
-                console.log('Weekly:', json.totalCost, json.totalConsumption);
             }
             const result = await fetch(`http://192.168.1.108:8000/monthlyElectricityUsage/${householdId}`, {
                 method:'GET',
@@ -93,7 +91,6 @@ const ElectricityMeterInsight = () => {
                 setMonthlyUsage(jsonResult.totalConsumption);
                 setLowTariffMonthly(jsonResult.lowTariffConsumption);
                 setHighTariffMonthly(jsonResult.highTariffConsumption);
-                console.log('Monthly:', jsonResult.totalCost, jsonResult.totalConsumption);
             }
         }
         catch(error){

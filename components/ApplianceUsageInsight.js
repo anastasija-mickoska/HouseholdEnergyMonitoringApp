@@ -1,8 +1,118 @@
-import { TouchableOpacity, Text, View, StyleSheet } from "react-native";
-import { useState } from 'react';
+import { TouchableOpacity, Text, View, StyleSheet, Alert } from "react-native";
+import { useState, useEffect } from 'react';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {auth} from '../firebase';
 
-const ApplianceUsageInsight = ({title,applianceUsage, usagesByAppliance, totalCost}) => {
+const ApplianceUsageInsight = ({title}) => {
     const [activePeriod, setActivePeriod] = useState('weekly');
+    const [userId, setUserId] = useState(null);
+    const [token, setToken] = useState(null);
+    const [householdId, setHouseholdId] = useState(null);
+    const [applianceBreakdownWeekly, setApplianceBreakdownWeekly] = useState({});
+    const [applianceBreakdownMonthly, setApplianceBreakdownMonthly] = useState({});
+    const [totalKWhWeekly, setTotalKWhWeekly] = useState(null);
+    const [totalKWhMonthly, setTotalKWhMonthly] = useState(null);
+    const [totalCostWeekly, setTotalCostWeekly] = useState(null);
+    const [totalCostMonthly, setTotalCostMonthly] = useState(null);
+
+    useEffect(() => {
+        const loadData = async () => {
+            const storedUserId = await AsyncStorage.getItem('id');
+            const storedHouseholdId = await AsyncStorage.getItem('householdId');
+            const fetchedToken = await auth.currentUser.getIdToken();
+            setHouseholdId(storedHouseholdId);
+            setToken(fetchedToken);
+            setUserId(storedUserId);
+
+            if (storedUserId && fetchedToken && title === 'Your Appliance Usage') {
+                fetchApplianceUsageForUser(storedUserId, fetchedToken);
+            }
+            else if(storedHouseholdId && fetchedToken && title === 'Appliance Usage Data') {
+                fetchApplianceUsageForHousehold(storedHouseholdId, fetchedToken);
+            }
+        };
+        loadData();
+    }, []);
+
+
+    //todo: check this method, it is not fetching data
+    const fetchApplianceUsageForHousehold = async(householdId, token) => {
+        try {
+            const res = await fetch(`http://192.168.1.108:8000/applianceEnergyUsages?householdId=${householdId}&type=weekly`, {
+                method:'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const json = await res.json();
+            if(json.error) {
+                Alert.alert(json.error);
+            }
+            else {
+                setTotalKWhWeekly(json.totalKWh);
+                setTotalCostWeekly(json.totalCost);
+                setApplianceBreakdownWeekly(json.applianceBreakdown);
+            }
+            const result = await fetch(`http://192.168.1.108:8000/applianceEnergyUsages?householdId=${householdId}&type=monthly`, {
+                method:'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const jsonResult = await result.json();
+            if(jsonResult.error) {
+                Alert.alert(jsonResult.error);
+            }
+            else {
+                setTotalKWhMonthly(jsonResult.totalKWh);
+                setTotalCostMonthly(jsonResult.totalCost);
+                setApplianceBreakdownMonthly(jsonResult.applianceBreakdown);
+            }
+        }
+        catch(error) {
+            console.error('Error fetching appliance usage for user!', error);
+            throw error;
+        }
+    };
+
+    const fetchApplianceUsageForUser = async(userId, token) => {
+        try {
+            const res = await fetch(`http://192.168.1.108:8000/applianceEnergyUsages?userId=${userId}&type=weekly`, {
+                method:'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const json = await res.json();
+            if(json.error) {
+                Alert.alert(json.error);
+            }
+            else {
+                setTotalKWhWeekly(json.totalKWh);
+                setTotalCostWeekly(json.totalCost);
+                setApplianceBreakdownWeekly(json.applianceBreakdown);
+            }
+            const result = await fetch(`http://192.168.1.108:8000/applianceEnergyUsages?userId=${userId}&type=monthly`, {
+                method:'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const jsonResult = await result.json();
+            if(jsonResult.error) {
+                Alert.alert(jsonResult.error);
+            }
+            else {
+                setTotalKWhMonthly(jsonResult.totalKWh);
+                setTotalCostMonthly(jsonResult.totalCost);
+                setApplianceBreakdownMonthly(jsonResult.applianceBreakdown);
+            }
+        }
+        catch(error) {
+            console.error('Error fetching appliance usage for user!', error);
+            throw error;
+        }
+    };
 
     const handlePressWeekly = () => {
         setActivePeriod('weekly');
@@ -10,6 +120,9 @@ const ApplianceUsageInsight = ({title,applianceUsage, usagesByAppliance, totalCo
     const handlePressMonthly = () => {
         setActivePeriod('monthly');
     }
+
+    const totalCost = activePeriod == 'weekly' ? totalCostWeekly : totalCostMonthly;
+    const applianceBreakdown = activePeriod == 'weekly' ? applianceBreakdownWeekly : applianceBreakdownMonthly;
 
     return(
         <View style={styles.container}>
@@ -19,7 +132,15 @@ const ApplianceUsageInsight = ({title,applianceUsage, usagesByAppliance, totalCo
                 <Text>Pie chart</Text>
             </View>
             <View style={styles.text}>
-                <Text style={styles.insights}>Usages by Appliance</Text>
+                {Object.keys(applianceBreakdown).length === 0 ? (
+                    <Text style={styles.insights}>No appliance data available.</Text>
+                ) : (
+                    Object.entries(applianceBreakdown).map(([appliance, data]) => (
+                        <Text key={appliance} style={styles.insights}>
+                            {appliance}: {data.kWh} kWh
+                        </Text>
+                    ))
+                )}
                 <Text style={styles.insights}>Total cost: {totalCost} den</Text>
             </View>
             <View style={styles.buttons}>

@@ -3,7 +3,6 @@ import { View, Text, TouchableOpacity, StyleSheet, Image, StatusBar } from 'reac
 export default function AppHeader({ onMenuToggle }) {
   return (
     <View style={styles.header}>
-      <StatusBar backgroundColor="#1CA7EC" barStyle="light-content" />
       <TouchableOpacity onPress={onMenuToggle} style={styles.menu}>
         <Image source={require('../assets/images/navbar.png')} style={styles.icon}/>
       </TouchableOpacity>
@@ -14,13 +13,13 @@ export default function AppHeader({ onMenuToggle }) {
 const styles = StyleSheet.create({
   header: {
     width:'100%',
-    height: 80,
+    height:70,
     backgroundColor: '#1CA7EC',
     flexDirection: 'row',
-    paddingHorizontal: 15,
+    paddingHorizontal: 10,
     alignItems:'flex-end',
     justifyContent:'flex-start',
-    paddingVertical:20
+    paddingVertical:15
   },
   menu: {
     width:25,

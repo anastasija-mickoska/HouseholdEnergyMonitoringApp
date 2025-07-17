@@ -45,7 +45,6 @@ const getHouseholdByName = async(name) => {
 const createHousehold = async(household) => {
     try {
         const doc = await db.collection('Households').add(household);
-        console.log('Created document with ID ', doc.id);
         return doc.id; 
     }
     catch(error) {
@@ -132,11 +131,163 @@ const getElectricityMeterUsagesForHousehold = async(householdId) => {
     }
 }; 
 
-const getApplianceEnergyUsagesForHousehold = async(householdId) => {
+const getTariffHours = (startDate, durationHours) => {
+    let highHours = 0;
+    let lowHours = 0;
+    let current = new Date(startDate);
+    const end = new Date(current.getTime() + durationHours * 60 * 60 * 1000);
+
+    while (current < end) {
+        const nextStep = new Date(current.getTime() + 60 * 60 * 1000);
+        const segmentEnd = nextStep > end ? end : nextStep;
+        const hour = current.getHours();
+        const isLowTariff =
+            (hour >= 13 && hour < 15) || (hour >= 22 || hour < 6);
+        const segmentDurationHours = (segmentEnd - current) / (1000 * 60 * 60);
+        if (isLowTariff) {
+            lowHours += segmentDurationHours;
+        } else {
+            highHours += segmentDurationHours;
+        }
+        current = segmentEnd;
+    }
+    return { highHours, lowHours };
+};
+
+const calculateTotalApplianceUsage = async (usages) => {
     try {
-        const snapshot = await db.collection('Appliance Energy Usages').where('householdId', '==', householdId).get();
-        const usages = snapshot.docs.map(doc => ({id:doc.id, ...doc.data()}));
-        return usages;
+        const appliances = await getAppliances();
+        const prices = await getElectricityPrices();
+        const appliancesData = {};
+        appliances.forEach(appliance => {
+            appliancesData[appliance.applianceName] = appliance.consumptionPerHour;
+        });
+
+        let totalKWh = 0;
+        let totalCost = 0;
+        let highTariffKWh = 0;
+        let lowTariffKWh = 0;
+
+        const applianceBreakdown = {};
+
+        usages.forEach(usage => {
+            const applianceName = usage.appliance;
+            const duration = usage.timeDuration;
+            const consumptionPerHour = appliancesData[applianceName];
+            const startTime = usage.startingTime.toDate();
+
+            const { highHours, lowHours } = getTariffHours(startTime, duration);
+
+            const highKWh = highHours * consumptionPerHour;
+            const lowKWh = lowHours * consumptionPerHour;
+
+            const lowTariffPrice = prices.find(p => p.tariff === 'Low tariff').price;
+            const highTariffPrice = prices.find(p => p.tariff === 'High Tariff 2').price;
+
+            const highCost = highKWh * highTariffPrice;
+            const lowCost = lowKWh * lowTariffPrice;
+
+            totalKWh += highKWh + lowKWh;
+            highTariffKWh += highKWh;
+            lowTariffKWh += lowKWh;
+            totalCost += highCost + lowCost;
+
+            if (!applianceBreakdown[applianceName]) {
+                applianceBreakdown[applianceName] = {
+                    kWh: 0,
+                    cost: 0
+                };
+            }
+            applianceBreakdown[applianceName].kWh += highKWh + lowKWh;
+            applianceBreakdown[applianceName].cost += highCost + lowCost;
+        });
+        return {
+            totalKWh: totalKWh.toFixed(2),
+            totalCost: totalCost.toFixed(2),
+            highTariffKWh: highTariffKWh.toFixed(2),
+            lowTariffKWh: lowTariffKWh.toFixed(2),
+            applianceBreakdown: Object.fromEntries(
+                Object.entries(applianceBreakdown).map(([name, data]) => [
+                    name,
+                    {
+                        kWh: data.kWh.toFixed(2),
+                        cost: data.cost.toFixed(2)
+                    }
+                ])
+            )
+        };
+    } catch (error) {
+        console.error('Error calculating appliance energy usage!', error);
+        throw error;
+    }
+};
+
+const calculateUsageConsumptionAndCost = async (usage) => {
+    try {
+        let highTariffKWh;
+        let lowTariffKWh;
+        const prices = await getElectricityPrices();
+        const lowTariffPrice = prices.find(p => p.tariff === 'Low tariff').price;
+        const highTariffPrice = prices.find(p => p.tariff === 'High Tariff 2').price;
+
+        if(usage.appliance) { //appliance energy usage
+            const appliances = await getAppliances();
+            const appliancesData = {};
+            appliances.forEach(appliance => {
+                appliancesData[appliance.applianceName] = appliance.consumptionPerHour;
+            });
+            const applianceName = usage.appliance;
+            const duration = usage.timeDuration;
+            const consumptionPerHour = appliancesData[applianceName];
+            const startTime = usage.startingTime.toDate();
+            const { highHours, lowHours } = getTariffHours(startTime, duration);
+            highTariffKWh = highHours * consumptionPerHour;
+            lowTariffKWh = lowHours * consumptionPerHour;
+        }
+        else if(usage.highTariff && usage.lowTariff) { //electricity meter usage
+            const monthlyReadings = await getMonthlyReadings(usage.householdId);
+            const lastReadingLowTariff = parseFloat(monthlyReadings?.lastReadingLowTariff || 0);
+            const lastReadingHighTariff = parseFloat(monthlyReadings?.lastReadingHighTariff || 0);
+            highTariffKWh = (usage.highTariff - lastReadingHighTariff);
+            lowTariffKWh = (usage.lowTariff - lastReadingLowTariff);
+        }
+
+        const highCost = highTariffKWh * highTariffPrice;
+        const lowCost = lowTariffKWh * lowTariffPrice;
+
+        const totalKWh = highTariffKWh + lowTariffKWh;
+        const totalCost = highCost + lowCost;
+
+        return {
+            totalKWh: totalKWh.toFixed(2),
+            totalCost: totalCost.toFixed(2),
+            highTariffKWh: highTariffKWh.toFixed(2),
+            lowTariffKWh: lowTariffKWh.toFixed(2),
+        };
+    } catch (error) {
+        console.error('Error calculating appliance energy usage!', error);
+        throw error;
+    }
+};
+
+const getApplianceEnergyUsagesForHousehold = async(householdId, type) => {
+    try {
+        let usages;
+        if(type == 'weekly') {
+            const now = new Date();
+            const startOfWeekDate = startOfWeek(now, { weekStartsOn: 1 });
+            const endOfWeekDate = endOfWeek(now, { weekStartsOn: 1 });
+            const weeklyUsages = await db.collection('Appliance Energy Usages').where('householdId', '==', householdId).where('date', '>=', startOfWeekDate).where('date', '<=', endOfWeekDate).get();
+            usages = weeklyUsages.docs.map(doc => ({id:doc.id, ...doc.data()}));
+        }
+        else if(type == 'monthly') {
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1); 
+            const monthlyUsages = await db.collection('Appliance Energy Usages').where('householdId', '==', householdId).where('date', '>=', startOfMonth).where('date', '<=', now).get();
+            usages = monthlyUsages.docs.map(doc => ({ id: doc.id, ...doc.data()}));      
+        }
+        const data = await calculateTotalApplianceUsage(usages);
+        return data;
     }
     catch(error) {
         console.error('Error getting appliance energy usages!', error);
@@ -144,11 +295,24 @@ const getApplianceEnergyUsagesForHousehold = async(householdId) => {
     }    
 };
 
-const getApplianceEnergyUsagesByUser = async(userId) => {
+const getApplianceEnergyUsagesByUser = async(userId, type) => {
     try {
-        const snapshot = await db.collection('Appliance Energy Usages').where('userId', '==', userId).get();
-        const usages = snapshot.docs.map(doc => ({id:doc.id, ...doc.data()}));
-        return usages;
+        let usages;
+        if(type == 'weekly') {
+            const now = new Date();
+            const startOfWeekDate = startOfWeek(now, { weekStartsOn: 1 });
+            const endOfWeekDate = endOfWeek(now, { weekStartsOn: 1 });
+            const weeklyUsages = await db.collection('Appliance Energy Usages').where('userId', '==', userId).where('date', '>=', startOfWeekDate).where('date', '<=', endOfWeekDate).get();
+            usages = weeklyUsages.docs.map(doc => ({id:doc.id, ...doc.data()}));
+        }
+        else if(type == 'monthly') {
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1); 
+            const monthlyUsages = await db.collection('Appliance Energy Usages').where('userId', '==', userId).where('date', '>=', startOfMonth).where('date', '<=', now).get();
+            usages = monthlyUsages.docs.map(doc => ({ id: doc.id, ...doc.data()}));      
+        }
+        const data = await calculateTotalApplianceUsage(usages);
+        return data;
     }
     catch(error) {
         console.error('Error getting electricity meter usages!', error);
@@ -158,9 +322,9 @@ const getApplianceEnergyUsagesByUser = async(userId) => {
 
 const addElectricityMeterUsage = async(data) => {
     try {
+        const totalCostAndConsumption = await calculateUsageConsumptionAndCost(data);
         const doc = await db.collection('Electricity Meter Usages').add(data);
-        console.log('Added electricity meter usage with ID ', doc.id);
-        console.log('Doc date: ', data.date);
+        return totalCostAndConsumption;
     }
     catch(error) {
         console.error('Error adding electricity meter usage!', error);
@@ -171,8 +335,8 @@ const addElectricityMeterUsage = async(data) => {
 const addApplianceEnergyUsage = async(data) => {
     try {
         const doc = await db.collection('Appliance Energy Usages').add(data);
-        console.log('Added appliance energy usage with ID ', doc.id);
-        console.log('Doc date: ', doc.date);
+        const totalCostAndConsumption = await calculateUsageConsumptionAndCost(data);
+        return totalCostAndConsumption;
     }
     catch(error) {
         console.error('Error adding appliance energy usage!', error);
@@ -228,9 +392,8 @@ const getWeeklyApplianceUsageByUser = async(userId) => {
         const now = new Date();
         const startOfWeekDate = startOfWeek(now, { weekStartsOn: 1 });
         const endOfWeekDate = endOfWeek(now, { weekStartsOn: 1 });
-        const weeklyUsages = await db.collection('Appliance Energy Usages').where('date', '>=', startOfWeekDate).where('date', '<=', endOfWeekDate).get();
+        const weeklyUsages = await db.collection('Appliance Energy Usages').where('userId', '==', userId).where('date', '>=', startOfWeekDate).where('date', '<=', endOfWeekDate).get();
         const weeklyusageData = weeklyUsages.docs.map(doc => ({ id: doc.id, ...doc.data()}));        
-        console.log('Retrieved weekly appliance usage data:', weeklyusageData);
         return weeklyusageData;
     }
     catch(error) {
@@ -245,7 +408,6 @@ const getMonthlyApplianceUsageByUser = async(userId) => {
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1); 
         const weeklyUsages = await db.collection('Appliance Energy Usages').where('userId', '==', userId).where('date', '>=', startOfMonth).where('date', '<=', now).get();
         const weeklyusageData = weeklyUsages.docs.map(doc => ({ id: doc.id, ...doc.data()}));        
-        console.log('Retrieved monthly appliance usage data:', weeklyusageData);
         return weeklyusageData;
     }
     catch(error) {
@@ -269,7 +431,7 @@ const getElectricityPrices = async() => {
 const getMonthlyReadings = async(householdId) => {
     try {
         const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1); // First day of this month, 00:00
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const monthlyUsages = await db.collection('Electricity Meter Usages').where('householdId', '==', householdId).where('date', '>=', startOfMonth).where('date', '<=', now).get();
         const monthlyUsagesData = monthlyUsages.docs.map(doc => ({id:doc.id, ...doc.data()})).sort((a, b) => a.date.toDate() - b.date.toDate());
         if (monthlyUsagesData.length < 2) {
@@ -447,5 +609,5 @@ module.exports = {
     getMonthlyElectricityCostAndConsumption,
     getWeeklyApplianceUsageByUser,
     getMonthlyApplianceUsageByUser,
-    getWeeklyElectricityCostAndConsumption
+    getWeeklyElectricityCostAndConsumption,
 };

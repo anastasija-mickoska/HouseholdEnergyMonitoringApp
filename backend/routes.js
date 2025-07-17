@@ -16,16 +16,14 @@ const { getAllHouseholds,
     setUserHousehold,
     getNotificationsForHousehold,
     getAppliances,
-    getElectricityPrices,
     getMonthlyElectricityCostAndConsumption,
     getWeeklyApplianceUsageByUser,
     getMonthlyApplianceUsageByUser,
-    getWeeklyElectricityCostAndConsumption
+    getWeeklyElectricityCostAndConsumption,
+    calculateApplianceUsageConsumptionAndCost
  } = require('./firestoreService');
 const authenticate = require('./config/auth');
 const { Timestamp } = require('firebase-admin/firestore');
-
-// router.get('/households', authenticate, getAllHouseholds); 
 
 router.post('/households', authenticate, async(req,res)=> {
   try {
@@ -64,8 +62,6 @@ router.patch('/households/:householdName', authenticate, async(req, res)=> {
   }
 }); 
 
-// router.get('/users', authenticate, getAllUsers); 
-
 router.get('/users/:id', authenticate, async(req, res)=> {
   try{
     const id = req.params.id;
@@ -102,11 +98,12 @@ router.get('/electricityMeterUsages/:householdId', authenticate, async(req,res)=
 
 router.get('/applianceEnergyUsages', authenticate, async (req, res) => {
   try {
+    const type = req.query.type; //weekly or monthly
     if (req.query.householdId) {
-      const results = await getApplianceEnergyUsagesForHousehold(req.query.householdId);
+      const results = await getApplianceEnergyUsagesForHousehold(req.query.householdId, type);
       res.json(results);
     } else if (req.query.userId) {
-      const results = await getApplianceEnergyUsagesByUser(req.query.userId);
+      const results = await getApplianceEnergyUsagesByUser(req.query.userId, type);
       res.json(results);
     } else {
       return res.status(400).json({ error: 'Missing householdId or userId in query.' });
@@ -126,8 +123,8 @@ router.post('/electricityMeterUsages', authenticate, async(req,res)=> {
     lowTariff,
     date: Timestamp.fromDate(new Date(date)) 
     };
-    await addElectricityMeterUsage(usageData);
-    res.status(201).json({message:'Electricity meter usage added.'});
+    const returnData = await addElectricityMeterUsage(usageData);
+    res.status(201).json({message:'Electricity meter usage added.', totalKWh: returnData.totalKWh, totalCost: returnData.totalCost});
   }
   catch(error){
     res.status(500).json({error:error.message});
@@ -142,11 +139,11 @@ router.post('/applianceEnergyUsages', authenticate, async(req,res)=> {
       householdId,
       appliance,
       timeDuration,
-      startingTime,
+      startingTime: Timestamp.fromDate(new Date(startingTime)),
       date: Timestamp.fromDate(new Date(date))
     };
-    await addApplianceEnergyUsage(usageData);
-    res.status(201).json({message:'Appliance energy usage added.'});
+    const returnData = await addApplianceEnergyUsage(usageData);
+    res.status(201).json({message:'Appliance energy usage added.', totalKWh: returnData.totalKWh, totalCost: returnData.totalCost});
   }
   catch(error){
     res.status(500).json({error:error.message});

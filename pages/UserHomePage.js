@@ -20,8 +20,8 @@ const UserHomePage = ({navigation}) => {
     const [monthlyUsage, setMonthlyUsage] = useState(null);
     const [weeklyCost, setWeeklyCost] = useState(null);
     const [monthlyCost, setMonthlyCost] = useState(null);
-    // const [weeklyApplianceUsage, setWeeklyApplianceUsage] = useState(null);
-    // const [monthlyApplianceUsage, setMonthlyApplianceUsage] = useState(null);
+    const [totalKWhWeekly, setTotalKWhWeekly] = useState(null);
+    const [totalKWhMonthly, setTotalKWhMonthly] = useState(null);
 
     useEffect(() => {
         const initData = async () => {
@@ -49,6 +49,12 @@ const UserHomePage = ({navigation}) => {
         }
     }, [householdId, token]);
 
+    useEffect(() => {
+        if (userId && token) {
+            fetchApplianceUsageForUser();
+        }
+    }, [userId, token]);
+
     const fetchUserName = async() => {
         try {
             const res = await fetch(`http://192.168.1.108:8000/users/${userId}`, {
@@ -62,7 +68,6 @@ const UserHomePage = ({navigation}) => {
                 Alert.alert(json.error);
             }
             else{
-                console.log('Username: ', json.name);
                 setUserName(json.name);
             }
         }
@@ -87,7 +92,6 @@ const UserHomePage = ({navigation}) => {
                 setWeeklyLimit(json.weeklyLimit);
                 setMonthlyLimit(json.monthlyLimit);
                 setHouseholdName(json.householdName);
-                console.log('Limits:', json.weeklyLimit, json.monthlyLimit);
             }
         }catch(error) {
             console.error(error);
@@ -110,7 +114,6 @@ const UserHomePage = ({navigation}) => {
             else {
                 setWeeklyCost(json.totalCost);
                 setWeeklyUsage(json.totalConsumption);
-                console.log('Weekly:', json.totalCost, json.totalConsumption);
             }
             const result = await fetch(`http://192.168.1.108:8000/monthlyElectricityUsage/${householdId}`, {
                 method:'GET',
@@ -125,7 +128,6 @@ const UserHomePage = ({navigation}) => {
             else {
                 setMonthlyCost(jsonResult.totalCost);
                 setMonthlyUsage(jsonResult.totalConsumption);
-                console.log('Monthly:', jsonResult.totalCost, jsonResult.totalConsumption);
             }
         }
         catch(error){
@@ -133,30 +135,40 @@ const UserHomePage = ({navigation}) => {
         }
     };
 
-
-    //this to be implemented after data has been calculated in service
-    // const fetchApplianceUsageForUser = async() => {
-    //     try {
-    //         const res = await fetch(`http://192.168.1.108:8000/weeklyApplianceUsage/${userId}`, {
-    //             method:'GET',
-    //             headers: {
-    //                 'Authorization':`Bearer ${token}`
-    //             }
-    //         });
-    //         const json = await res.json();
-    //         if(json.error) {
-    //             Alert.alert(json.error);
-    //         }
-    //         else {
-    //             setWeeklyApplianceUsage(json.totalCost);
-    //             setWeeklyUsage(json.totalConsumption);
-    //         }
-    //     }
-    //     catch(error){
-    //         console.error(error);
-    //     }
-    // };
-
+    const fetchApplianceUsageForUser = async() => {
+        try {
+            const res = await fetch(`http://192.168.1.108:8000/applianceEnergyUsages?userId=${userId}&type=weekly`, {
+                method:'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const json = await res.json();
+            if(json.error) {
+                Alert.alert(json.error);
+            }
+            else {
+                setTotalKWhWeekly(json.totalKWh);
+            }
+            const result = await fetch(`http://192.168.1.108:8000/applianceEnergyUsages?userId=${userId}&type=monthly`, {
+                method:'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const jsonResult = await result.json();
+            if(jsonResult.error) {
+                Alert.alert(jsonResult.error);
+            }
+            else {
+                setTotalKWhMonthly(jsonResult.totalKWh);
+            }
+        }
+        catch(error) {
+            console.error('Error fetching appliance usage for user!', error);
+            throw error;
+        }
+    };
 
     const handleAddButton = () => {
         navigation.navigate('Add Usage');
@@ -177,7 +189,7 @@ const UserHomePage = ({navigation}) => {
                     </View>
                     <UsageComponent week={`${weeklyUsage ?? 0}`} month={`${monthlyUsage ?? 0}`} />
                     <Limits week={weeklyLimit} month={monthlyLimit}/>
-                    <WeeklyMonthlyInsight title={'Your Appliance Usage'} texts={['This Week', 'This Month']} values={[15,85]}/>
+                    <WeeklyMonthlyInsight title={'Your Appliance Usage'} texts={['This Week', 'This Month']} values={[`${totalKWhWeekly ?? 0} KWh`, `${totalKWhMonthly ?? 0} KWh`]}/>
                     <CustomButton text={'View Insights'} imgSource={"insights"} onPress={handleInsightsButton}/>
                     <WeeklyMonthlyInsight title={'Electricity Cost'} texts={['This week', 'This month']} values={[`${weeklyCost ?? 0} den`, `${monthlyCost ?? 0} den`]} />
                     <CustomButton text={'Add Energy Usage'} imgSource={"add"} onPress={handleAddButton}/>

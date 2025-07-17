@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
   },
   drawer: {
     position: 'absolute',
-    top: 80,
+    top: 70,
     left: 0,
     width: '100%',
     height: 'auto',

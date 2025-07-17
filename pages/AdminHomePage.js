@@ -84,7 +84,6 @@ const AdminHomePage = ({ navigation }) => {
                 setWeeklyLimit(json.weeklyLimit);
                 setMonthlyLimit(json.monthlyLimit);
                 setHouseholdName(json.householdName);
-                console.log('Limits:', json.weeklyLimit, json.monthlyLimit);
             }
         }catch(error) {
             console.error(error);
@@ -106,7 +105,6 @@ const AdminHomePage = ({ navigation }) => {
             else {
                 setWeeklyCost(json.totalCost);
                 setWeeklyUsage(json.totalConsumption);
-                console.log('Weekly:', json.totalCost, json.totalConsumption);
             }
             const result = await fetch(`http://192.168.1.108:8000/monthlyElectricityUsage/${householdId}`, {
                 method:'GET',
@@ -121,7 +119,6 @@ const AdminHomePage = ({ navigation }) => {
             else {
                 setMonthlyCost(jsonResult.totalCost);
                 setMonthlyUsage(jsonResult.totalConsumption);
-                console.log('Monthly:', jsonResult.totalCost, jsonResult.totalConsumption);
             }
         }
         catch(error){
