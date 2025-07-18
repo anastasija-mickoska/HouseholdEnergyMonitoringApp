@@ -2,6 +2,7 @@ import { TouchableOpacity, Text, View, StyleSheet, Alert } from "react-native";
 import { useState, useEffect } from 'react';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {auth} from '../firebase';
+import { PieChart } from "react-native-gifted-charts";
 
 const ApplianceUsageInsight = ({title}) => {
     const [activePeriod, setActivePeriod] = useState('weekly');
@@ -9,11 +10,15 @@ const ApplianceUsageInsight = ({title}) => {
     const [token, setToken] = useState(null);
     const [householdId, setHouseholdId] = useState(null);
     const [applianceBreakdownWeekly, setApplianceBreakdownWeekly] = useState({});
-    const [applianceBreakdownMonthly, setApplianceBreakdownMonthly] = useState({});
-    const [totalKWhWeekly, setTotalKWhWeekly] = useState(null);
-    const [totalKWhMonthly, setTotalKWhMonthly] = useState(null);
-    const [totalCostWeekly, setTotalCostWeekly] = useState(null);
-    const [totalCostMonthly, setTotalCostMonthly] = useState(null);
+    const [applianceBreakdownMonthly, setApplianceBreakdownMonthly] = useState({});  
+    const [totalKWhWeekly, setTotalKWhWeekly] = useState(0);
+    const [totalKWhMonthly, setTotalKWhMonthly] = useState(0);
+    const [totalCostWeekly, setTotalCostWeekly] = useState(0);
+    const [totalCostMonthly, setTotalCostMonthly] = useState(0);
+    const [weeklyUsage, setWeeklyUsage] = useState(0);
+    const [monthlyUsage, setMonthlyUsage] = useState(0);
+    const [data, setData] =useState([]);
+    const [pieData, setPieData] = useState([]);
 
     useEffect(() => {
         const loadData = async () => {
@@ -30,12 +35,42 @@ const ApplianceUsageInsight = ({title}) => {
             else if(storedHouseholdId && fetchedToken && title === 'Appliance Usage Data') {
                 fetchApplianceUsageForHousehold(storedHouseholdId, fetchedToken);
             }
+
+            if(storedHouseholdId && fetchedToken) {
+                fetchElectricityCostAndConsumption(storedHouseholdId, fetchedToken);
+            }
         };
         loadData();
     }, []);
 
+    useEffect(()=> {
+        if (householdId && token && totalKWhWeekly !== null && totalKWhMonthly !== null && weeklyUsage !== null && monthlyUsage !== null) {
+            const newData = activePeriod === 'weekly'
+            ? [
+                { value: totalKWhWeekly, color: '#4ADEDE' },
+                { value: weeklyUsage - totalKWhWeekly, color: '#E0E0E0' },
+              ]
+            : [
+                { value: totalKWhMonthly, color: '#4ADEDE' },
+                { value: monthlyUsage - totalKWhMonthly, color: '#E0E0E0' },
+              ];
+            setData(newData);
+        }
+    }, [totalKWhWeekly, totalKWhMonthly, weeklyUsage, monthlyUsage, token, householdId, activePeriod]);
 
-    //todo: check this method, it is not fetching data
+    useEffect(() => {
+        const breakdown = activePeriod === 'weekly' ? applianceBreakdownWeekly : applianceBreakdownMonthly;
+        const colors = ['#4ADEDE', '#1AA7EC', '#1F2F98', '#055B5C', '#7FFFD4', '#289C8E'];
+
+        const pieChartData = Object.entries(breakdown).map(([appliance, data], index) => ({
+            value: Number(data.kWh),
+            color: colors[index % colors.length],
+            text: appliance
+        }));
+
+        setPieData(pieChartData);
+    }, [activePeriod, applianceBreakdownWeekly, applianceBreakdownMonthly]);
+
     const fetchApplianceUsageForHousehold = async(householdId, token) => {
         try {
             const res = await fetch(`http://192.168.1.108:8000/applianceEnergyUsages?householdId=${householdId}&type=weekly`, {
@@ -49,8 +84,8 @@ const ApplianceUsageInsight = ({title}) => {
                 Alert.alert(json.error);
             }
             else {
-                setTotalKWhWeekly(json.totalKWh);
-                setTotalCostWeekly(json.totalCost);
+                setTotalKWhWeekly(Number(json.totalKWh));
+                setTotalCostWeekly(Number(json.totalCost));
                 setApplianceBreakdownWeekly(json.applianceBreakdown);
             }
             const result = await fetch(`http://192.168.1.108:8000/applianceEnergyUsages?householdId=${householdId}&type=monthly`, {
@@ -64,8 +99,8 @@ const ApplianceUsageInsight = ({title}) => {
                 Alert.alert(jsonResult.error);
             }
             else {
-                setTotalKWhMonthly(jsonResult.totalKWh);
-                setTotalCostMonthly(jsonResult.totalCost);
+                setTotalKWhMonthly(Number(jsonResult.totalKWh));
+                setTotalCostMonthly(Number(jsonResult.totalCost));
                 setApplianceBreakdownMonthly(jsonResult.applianceBreakdown);
             }
         }
@@ -88,8 +123,8 @@ const ApplianceUsageInsight = ({title}) => {
                 Alert.alert(json.error);
             }
             else {
-                setTotalKWhWeekly(json.totalKWh);
-                setTotalCostWeekly(json.totalCost);
+                setTotalKWhWeekly(Number(json.totalKWh));
+                setTotalCostWeekly(Number(json.totalCost));
                 setApplianceBreakdownWeekly(json.applianceBreakdown);
             }
             const result = await fetch(`http://192.168.1.108:8000/applianceEnergyUsages?userId=${userId}&type=monthly`, {
@@ -103,14 +138,48 @@ const ApplianceUsageInsight = ({title}) => {
                 Alert.alert(jsonResult.error);
             }
             else {
-                setTotalKWhMonthly(jsonResult.totalKWh);
-                setTotalCostMonthly(jsonResult.totalCost);
+                setTotalKWhMonthly(Number(jsonResult.totalKWh));
+                setTotalCostMonthly(Number(jsonResult.totalCost));
                 setApplianceBreakdownMonthly(jsonResult.applianceBreakdown);
             }
         }
         catch(error) {
             console.error('Error fetching appliance usage for user!', error);
             throw error;
+        }
+    };
+
+    const fetchElectricityCostAndConsumption = async(householdId, token) => {
+        try {
+            const res = await fetch(`http://192.168.1.108:8000/weeklyElectricityUsage/${householdId}`, {
+                method:'GET',
+                headers: {
+                    'Authorization':`Bearer ${token}`
+                }
+            });
+            const json = await res.json();
+            if(json.error) {
+                Alert.alert(json.error);
+            }
+            else {
+                setWeeklyUsage(Number(json.totalConsumption));
+            }
+            const result = await fetch(`http://192.168.1.108:8000/monthlyElectricityUsage/${householdId}`, {
+                method:'GET',
+                headers: {
+                    'Authorization':`Bearer ${token}`
+                }
+            });
+            const jsonResult = await result.json();
+            if(jsonResult.error) {
+                Alert.alert(jsonResult.error);
+            }
+            else {
+                setMonthlyUsage(Number(jsonResult.totalConsumption));
+            }
+        }
+        catch(error){
+            console.error(error);
         }
     };
 
@@ -128,21 +197,39 @@ const ApplianceUsageInsight = ({title}) => {
         <View style={styles.container}>
             <Text style={styles.title}>{title}</Text>
             <View style={styles.charts}>
-                <Text>Donut chart</Text>
-                <Text>Pie chart</Text>
+                <PieChart donut radius={60} innerRadius={45} data={data} isAnimated={true} centerLabelComponent={() => {
+                    if(weeklyUsage != null && monthlyUsage !=null && totalKWhMonthly!= null && totalKWhWeekly !=null) {
+                        const usage = activePeriod === 'weekly' ? (weeklyUsage ?? 1) : (monthlyUsage ?? 1);
+                        const totalKWh = activePeriod === 'weekly' ? (totalKWhWeekly ?? 0) : (totalKWhMonthly ?? 0);
+                        const percentage = ((totalKWh / usage) * 100) || 0;
+                        return (
+                            <View style={{ alignItems: 'center' }}>
+                                <Text style={styles.consumption}>
+                                    {(totalKWh ?? 0).toFixed(1)} KWh
+                                </Text>
+                                <Text style={styles.percentage}>{percentage.toFixed(0)}% of total {activePeriod} usage</Text>
+                            </View>
+                        );
+                    }
+                    else {
+                        return(
+                            <View style={{ alignItems: 'center' }}>
+                                <Text style={styles.percentage}>No data available</Text>
+                            </View>  
+                        )
+                    }
+                }}/>
+                <PieChart radius={60} data={pieData} isAnimated={true} strokeColor="#F3F3F3" strokeWidth={0.75} focusOnPress/>
             </View>
-            <View style={styles.text}>
-                {Object.keys(applianceBreakdown).length === 0 ? (
-                    <Text style={styles.insights}>No appliance data available.</Text>
-                ) : (
-                    Object.entries(applianceBreakdown).map(([appliance, data]) => (
-                        <Text key={appliance} style={styles.insights}>
-                            {appliance}: {data.kWh} kWh
-                        </Text>
-                    ))
-                )}
-                <Text style={styles.insights}>Total cost: {totalCost} den</Text>
+            <View>
+                {pieData.map((item, index) => (
+                    <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}>
+                        <View style={{ width: 12, height: 12, backgroundColor: item.color, marginRight: 8, borderRadius: 2 }} />
+                        <Text style={styles.itemText}>{item.text}: {item.value} KWh</Text>
+                    </View>
+                ))}
             </View>
+            <Text style={styles.totalCostText}>Total cost: {totalCost} den</Text>
             <View style={styles.buttons}>
                 <TouchableOpacity style={activePeriod === 'weekly' ? styles.active : styles.button} onPress={handlePressWeekly}>
                     <Text style={activePeriod === 'weekly' ? styles.activeText : styles.buttonText}>Weekly</Text>
@@ -178,8 +265,9 @@ const styles = StyleSheet.create({
     charts: {
         width:'100%',
         flexDirection:'row',
-        justifyContent:'space-around',
-        alignItems:'center'
+        justifyContent:'space-evenly',
+        alignItems:'center',
+        gap:10
     },
     text: {
         backgroundColor: '#4ADEDE',
@@ -187,13 +275,21 @@ const styles = StyleSheet.create({
         padding:10,
         alignItems:'center'
     },
-    insights: {
-        color: '#F3F3F3',
+    itemText: {
+        color: '#1F2F98',
         fontSize: 12,
         fontFamily: 'Roboto Flex',
         fontWeight: 500,
         letterSpacing: 0.6,
         alignItems:'center'
+    },
+    totalCostText: {
+        color: '#1F2F98',
+        fontSize: 16,
+        fontFamily: 'Roboto Flex',
+        fontWeight: 700,
+        letterSpacing: 0.8,
+        alignItems:'center'    
     },
     buttons: {
         justifyContent:'space-around',
@@ -230,6 +326,21 @@ const styles = StyleSheet.create({
         fontFamily: 'Roboto Flex',
         fontWeight: 500,
         letterSpacing: 0.5,    
+    },
+    consumption: {
+        color: '#1F2F98',
+        fontSize: 16,
+        fontFamily: 'Roboto Flex',
+        fontWeight: 700,
+        letterSpacing: 1,
+        textAlign:'center'
+    },
+    percentage: {
+        color: '#1F2F98',
+        fontSize: 10,
+        fontFamily: 'Roboto Flex',
+        fontWeight: 700,
+        letterSpacing: 0.60,
+        textAlign:'center'
     }
-
 })

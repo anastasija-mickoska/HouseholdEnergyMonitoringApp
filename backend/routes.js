@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { getAllHouseholds, 
+const { 
     createHousehold, 
     getHouseholdById, 
     getHouseholdByName,
     joinHousehold, 
-    getAllUsers, 
     getUserById,
     getElectricityMeterUsagesForHousehold, 
     getApplianceEnergyUsagesByUser, 
@@ -15,13 +14,16 @@ const { getAllHouseholds,
     changeUsageLimits, 
     setUserHousehold,
     getNotificationsForHousehold,
-    getAppliances,
-    getMonthlyElectricityCostAndConsumption,
     getWeeklyApplianceUsageByUser,
     getMonthlyApplianceUsageByUser,
-    getWeeklyElectricityCostAndConsumption,
-    calculateApplianceUsageConsumptionAndCost
  } = require('./firestoreService');
+ const {
+    calculateWeeklyConsumptionForFiveWeeks,
+    calculateMonthlyConsumptionForFiveMonths,
+    getWeeklyElectricityCostAndConsumption,
+    getMonthlyElectricityCostAndConsumption,
+    getAppliances,
+} = require('./usagesService');
 const authenticate = require('./config/auth');
 const { Timestamp } = require('firebase-admin/firestore');
 
@@ -227,6 +229,30 @@ router.get('/monthlyApplianceUsage/:userId', authenticate, async(req,res) => {
     }
     catch (error) {
         console.error('Error getting monthly appliance usage for user :', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/previousWeeksUsages/:householdId', authenticate, async(req,res) => {
+    try {
+      const householdId = req.params.householdId;
+      const data = await calculateWeeklyConsumptionForFiveWeeks(householdId);
+      res.json(data);
+    }
+    catch (error) {
+        console.error('Error getting previous weeks usages for household :', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/previousMonthsUsages/:householdId', authenticate, async(req,res) => {
+    try {
+      const householdId = req.params.householdId;
+      const data = await calculateMonthlyConsumptionForFiveMonths(householdId);
+      res.json(data);
+    }
+    catch (error) {
+        console.error('Error getting previous weeks usages for household :', error);
         res.status(500).json({ error: error.message });
     }
 });

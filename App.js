@@ -56,7 +56,7 @@ const App = () => {
 
   return (
     <View onLayout={onLayoutRootView} style={{ flex: 1 }}>
-      <StatusBar translucent backgroundColor="#1CA7EC" barStyle="light-content" />
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="Login" component={Login} />

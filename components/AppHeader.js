@@ -13,7 +13,7 @@ export default function AppHeader({ onMenuToggle }) {
 const styles = StyleSheet.create({
   header: {
     width:'100%',
-    height:70,
+    height:80,
     backgroundColor: '#1CA7EC',
     flexDirection: 'row',
     paddingHorizontal: 10,
