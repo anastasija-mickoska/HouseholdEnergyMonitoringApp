@@ -4,19 +4,6 @@ import Notification from '../components/Notification';
 import { useEffect, useState } from "react";
 import { auth } from '../firebase';
 
-// const notificationsExample = [
-//     { id:1,text: "Some text", date:'08/07/2025'},
-//     { id:2,text: "Some text", date:'08/07/2025'},
-//     { id:3,text: "Some text", date:'08/07/2025'},
-//     { id:4,text: "Some text", date:'08/07/2025'},
-//     { id:5,text: "Some text", date:'08/07/2025'},
-//     { id:6,text: "Some text", date:'08/07/2025'},
-//     { id:7,text: "Some text", date:'08/07/2025'},
-//     { id:8,text: "Some text", date:'08/07/2025'},
-//     { id:9,text: "Some text", date:'08/07/2025'},
-//     { id:10,text: "Some text", date:'08/07/2025'},
-// ];
-
 const NotificationsList = ({navigation}) => {
     const [householdId, setHouseholdId] = useState(null);
     const [notifications, setNotifications] = useState(null);
@@ -47,9 +34,6 @@ const NotificationsList = ({navigation}) => {
         fetchNotifications();
     }, []);
 
-
-
-
     if(!notifications) {
         return (
             <PageLayout navigation={navigation}>
@@ -67,7 +51,7 @@ const NotificationsList = ({navigation}) => {
                 <ScrollView contentContainerStyle={styles.notifications}>
                 {
                     notifications.map((item, index) => (
-                        <Notification key={item.id} notification = {item.text} date = {item.date}/>
+                        <Notification key={item.id} notification = {item.notification} date = {item.date}/>
                     ))
                 }
                 </ScrollView>            

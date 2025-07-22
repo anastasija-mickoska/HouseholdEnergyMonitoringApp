@@ -36,4 +36,4 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-*.json
+**/householdenergymonitoringapp-firebase-adminsdk-fbsvc-b7ab9cb89b.json

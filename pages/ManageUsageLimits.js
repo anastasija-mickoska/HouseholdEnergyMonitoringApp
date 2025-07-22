@@ -17,8 +17,8 @@ const ManageUsageLimits = ({navigation}) => {
         const loadData = async () => {
             const storedHouseholdId = await AsyncStorage.getItem('householdId');
             setHouseholdId(storedHouseholdId);
-            const token = await auth.currentUser.getIdToken();
-            setToken(token);
+            const fetchedToken = await auth.currentUser.getIdToken();
+            setToken(fetchedToken);
             const storedRole = await AsyncStorage.getItem('role');
             setRole(storedRole);
         };

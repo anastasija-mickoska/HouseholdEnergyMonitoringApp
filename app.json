@@ -4,9 +4,17 @@
     "slug": "HouseholdEnergyMonitoringApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/lightbulb.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "extra": {
+      "firebase": {
+        "projectId": "householdenergymonitoringapp"
+      },
+      "eas": {
+        "projectId": "6658b1b1-b0bf-4239-88ff-8990c454ce48"
+      }
+    },
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -16,14 +24,18 @@
       "supportsTablet": true
     },
     "android": {
+      "googleServicesFile": "./google-services.json",
+      "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": ["NOTIFICATIONS"]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/images/lightbulb.png"
+    },
+    "scheme": "householdenergy"
   }
 }

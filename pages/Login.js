@@ -3,10 +3,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import CustomForm from '../components/CustomForm'; 
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { doc, getDoc } from 'firebase/firestore';
-import {auth, db} from '../firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase';
+import messaging from '@react-native-firebase/messaging';
 
-const Login = ({navigation}) => {
+const Login = ({ navigation }) => {
   const fields = [
     { name: 'email', label:'Email', type: 'email', placeholder: "Enter email...", required: true },
     { name: 'password', label: 'Password', type: 'password', placeholder: "Enter password...", required: true },
@@ -16,37 +17,59 @@ const Login = ({navigation}) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      const userDocRef = doc(db,"users",user.uid);
+
+      let fcmToken = null;
+      try {
+        const authStatus = await messaging().requestPermission();
+        const enabled =
+          authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+          authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+        if (enabled) {
+          fcmToken = await messaging().getToken();
+          console.log('FCM Token:', fcmToken);
+          await updateDoc(doc(db, 'users', user.uid), {
+            fcmToken: fcmToken
+          });
+        } else {
+          console.log('Notification permission denied');
+        }
+      } catch (msgError) {
+        console.warn('FCM permission/token error:', msgError);
+      }
+
+      const userDocRef = doc(db, "users", user.uid);
       const userDocSnap = await getDoc(userDocRef);
       if (!userDocSnap.exists()) {
         throw new Error("User data not found in Firestore.");
       }
       const { role, name, householdId } = userDocSnap.data();
+
       await AsyncStorage.multiSet([
-          ['role', role],
-          ['name', name],
-          ['email', email],
-          ['householdId', householdId ?? 'null'],
-          ['id', user.uid]
+        ['role', role],
+        ['name', name],
+        ['email', email],
+        ['householdId', householdId ?? 'null'],
+        ['id', user.uid],
+        ['fcmToken', fcmToken ?? 'null'],
       ]);
-      console.log('User details: ', role, name, email, householdId, user.uid);
+
+      console.log('User details:', role, name, email, householdId, user.uid);
       Alert.alert('Logged in as:', user.email);
+
       if (!householdId) {
-          navigation.navigate('Welcome');
-      }
-      else {
-        if(role == 'Admin') {
+        navigation.navigate('Welcome');
+      } else {
+        if (role === 'Admin') {
           navigation.navigate('Admin Home');
-        }
-        else if(role == 'User') {
+        } else if (role === 'User') {
           navigation.navigate('User Home');
         }
-      } 
+      }
     } catch (error) {
       Alert.alert("Login failed", error.message);
+      console.error(error.message);
     }
   };
-
 
   return (
     <LinearGradient

@@ -4,6 +4,7 @@ import CustomForm from '../components/CustomForm';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import {auth, db} from '../firebase';
 import { setDoc, doc } from 'firebase/firestore';
+import messaging from '@react-native-firebase/messaging';
 
 const Register = ({navigation}) => {
   const fields = [
@@ -18,16 +19,33 @@ const Register = ({navigation}) => {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      await setDoc(doc(db,"users", user.uid), {
-        name:name,
-        email:email,
-        role:role,
-        householdId:null
+      let fcmToken = null;
+      try {
+        const authStatus = await messaging().requestPermission();
+        const enabled =
+          authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+          authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+        if (enabled) {
+          fcmToken = await messaging().getToken();
+          console.log('FCM Token:', fcmToken);
+        }
+      } catch (error) {
+        console.warn('FCM permission/token error:', error);
+      }
+
+      await setDoc(doc(db, "users", user.uid), {
+        name: name,
+        email: email,
+        role: role,
+        householdId: null,
+        fcmToken: fcmToken
       });
+
       Alert.alert('Registered:', user.email);
       navigation.navigate('Login');
     } catch (error) {
       Alert.alert("Registration failed", error.message);
+      console.error(error.message);
     }
   };
 

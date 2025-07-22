@@ -2,14 +2,13 @@ const { db } = require('./config/firebaseConfig');
 const { startOfWeek, endOfWeek } = require('date-fns');
 const {calculateTotalApplianceUsage, calculateUsageConsumptionAndCost} = require('./usagesService');
 
-const getAllHouseholds = async () => {
+const checkIfHouseholdExists = async (householdName, householdCode) => {
     try {
-        const snapshot = await db.collection('Households').get();
-        const households = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        return households;
+        const snapshot = await db.collection('Households').where('householdName', '==', householdName).where('householdCode', '==', householdCode).get();
+        return !snapshot.empty;
     }
     catch(error) {
-        console.error('Error getting households!', error);
+        console.error('Error checking if household exists!', error);
         throw error;
     }
 };
@@ -34,7 +33,7 @@ const getHouseholdByName = async(name) => {
         if (household.empty) {
             throw new Error('Household with this name does not exist!');
         }
-        const householdId = household.docs[0].id;
+        const householdId = household.id;
         return householdId;
     }
     catch(error) {
@@ -45,8 +44,17 @@ const getHouseholdByName = async(name) => {
 
 const createHousehold = async(household) => {
     try {
-        const doc = await db.collection('Households').add(household);
-        return doc.id; 
+        const householdName = household.householdName;
+        const householdCode = household.householdCode;
+        const exists = checkIfHouseholdExists(householdName, householdCode);
+        if(!exists) {
+            const doc = await db.collection('Households').add(household);
+            return doc.id; 
+        }
+        else {
+            throw new Error('Household already exists!');
+        }
+
     }
     catch(error) {
         console.error('Error creating household!', error);
@@ -93,6 +101,18 @@ const getUserById = async (id) => {
     }
 };
 
+const getUsersForHousehold = async(householdId) => {
+    try {
+        const snapshot = await db.collection('users').where('householdId', '==', householdId).get();
+        const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return users;
+    }
+    catch(error) {
+        console.error('Erro getting users for household!', error);
+        throw error;
+    }
+}
+
 const setUserHousehold = async(id, householdId) => {
     try {
         const doc = await db.collection('users').doc(id).get();
@@ -106,7 +126,6 @@ const setUserHousehold = async(id, householdId) => {
         throw error;
     }
 };
-
 
 const getElectricityMeterUsagesForHousehold = async(householdId) => {
     try {
@@ -170,11 +189,36 @@ const getApplianceEnergyUsagesByUser = async(userId, type) => {
     }
 };
 
+const checkIfElectricityMeterUsageEntryExists = async(data) => {
+    try {
+        const snapshot = await db.collection('Electricity Meter Usages').where('lowTariff', '==', data.lowTariff).where('highTariff', '==', data.highTariff).where('date', '==', data.date).get();
+        return !snapshot.empty;    
+    }
+    catch(error) {
+        console.error('Error checking if appliance usage exists!', error);
+        throw error;
+    }
+};
+
 const addElectricityMeterUsage = async(data) => {
     try {
-        const totalCostAndConsumption = await calculateUsageConsumptionAndCost(data);
-        const doc = await db.collection('Electricity Meter Usages').add(data);
-        return totalCostAndConsumption;
+        const lowTariff = data.lowTariff;
+        const highTariff = data.highTariff;
+        const date = data.date;
+        const newData = {
+            lowTariff,
+            highTariff,
+            date
+        };
+        const exists = await checkIfElectricityMeterUsageEntryExists(newData);
+        if(!exists) {
+            const totalCostAndConsumption = await calculateUsageConsumptionAndCost(data);
+            const doc = await db.collection('Electricity Meter Usages').add(data);
+            return totalCostAndConsumption;
+        }
+        else {
+            throw new Error('This electricity meter data already exists!');
+        }
     }
     catch(error) {
         console.error('Error adding electricity meter usage!', error);
@@ -182,11 +226,38 @@ const addElectricityMeterUsage = async(data) => {
     }
 };
 
+const checkIfApplianceUsageEntryExists = async(data) => {
+    try {
+        const snapshot = await db.collection('Appliance Energy Usages').where('appliance', '==', data.appliance).where('timeDuration', '==', data.timeDuration).where('date', '==', data.date).where('startingTime','==', data.startingTime).get();
+        return !snapshot.empty;    
+    }
+    catch(error) {
+        console.error('Error checking if appliance usage exists!', error);
+        throw error;
+    }
+};
+
 const addApplianceEnergyUsage = async(data) => {
     try {
-        const doc = await db.collection('Appliance Energy Usages').add(data);
-        const totalCostAndConsumption = await calculateUsageConsumptionAndCost(data);
-        return totalCostAndConsumption;
+        const appliance = data.appliance;
+        const timeDuration = data.timeDuration;
+        const date = data.date;
+        const startingTime = data.startingTime;
+        const newData = {
+            appliance,
+            timeDuration,
+            date,
+            startingTime
+        };
+        const exists = await checkIfApplianceUsageEntryExists(newData);
+        if(!exists) {
+            const doc = await db.collection('Appliance Energy Usages').add(data);
+            const totalCostAndConsumption = await calculateUsageConsumptionAndCost(data);
+            return totalCostAndConsumption;
+        }
+        else {
+            throw new Error('This appliance energy usage already exists!');
+        }
     }
     catch(error) {
         console.error('Error adding appliance energy usage!', error);
@@ -206,18 +277,6 @@ const changeUsageLimits = async (householdId, weekly, monthly) => {
     } 
     catch (error) {
         console.error('Error changing usage limits!', error);
-        throw error;
-    }
-};
-
-const getNotificationsForHousehold = async(householdId) => {
-    try{
-        const snapshot = await db.collection('Notifications').where('householdId' , '==', householdId).get();
-        const notifications = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-        return notifications;
-    }
-    catch(error) {
-        console.error('Error getting notifications for this household!', error);
         throw error;
     }
 };
@@ -252,12 +311,12 @@ const getMonthlyApplianceUsageByUser = async(userId) => {
 };
 
 module.exports = {
-    getAllHouseholds,
+    checkIfHouseholdExists,
     getHouseholdById,
     getHouseholdByName,
     getUserById,
+    getUsersForHousehold,
     changeUsageLimits,
-    getNotificationsForHousehold,
     getApplianceEnergyUsagesByUser,
     getApplianceEnergyUsagesForHousehold,
     getElectricityMeterUsagesForHousehold,

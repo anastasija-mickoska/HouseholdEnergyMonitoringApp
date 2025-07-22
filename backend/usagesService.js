@@ -67,10 +67,19 @@ const getMonthlyElectricityCostAndConsumption = async (householdId) => {
             ...doc.data()
         })).sort((a, b) => a.date.toDate() - b.date.toDate());
 
-        const firstReadingLowTariff = parseFloat(monthlyUsagesData[0].lowTariff);
-        const firstReadingHighTariff = parseFloat(monthlyUsagesData[0].highTariff);
-        const lastReadingLowTariff = parseFloat(monthlyUsagesData[monthlyUsagesData.length - 1].lowTariff);
-        const lastReadingHighTariff = parseFloat(monthlyUsagesData[monthlyUsagesData.length - 1].highTariff);
+        if (monthlyUsagesData.length === 0) {
+            return {
+                lowTariffConsumption: '0.00',
+                highTariffConsumption: '0.00',
+                totalCost: '0.00',
+                totalConsumption: '0.00'
+            };
+        }
+
+        const firstReadingLowTariff = parseFloat(monthlyUsagesData[0].lowTariff ?? 0);
+        const firstReadingHighTariff = parseFloat(monthlyUsagesData[0].highTariff ?? 0);
+        const lastReadingLowTariff = parseFloat(monthlyUsagesData[monthlyUsagesData.length - 1].lowTariff ?? 0);
+        const lastReadingHighTariff = parseFloat(monthlyUsagesData[monthlyUsagesData.length - 1].highTariff ?? 0);
 
         const monthlyConsumptionLowTariff = lastReadingLowTariff - firstReadingLowTariff;
         let monthlyConsumptionHighTariff = lastReadingHighTariff - firstReadingHighTariff;
@@ -128,10 +137,19 @@ const getWeeklyElectricityCostAndConsumption = async (householdId) => {
             ...doc.data()
         })).sort((a, b) => a.date.toDate() - b.date.toDate());
 
-        const firstReadingLowTariff = parseFloat(weeklyUsagesData[0].lowTariff);
-        const firstReadingHighTariff = parseFloat(weeklyUsagesData[0].highTariff);
-        const lastReadingLowTariff = parseFloat(weeklyUsagesData[weeklyUsagesData.length - 1].lowTariff);
-        const lastReadingHighTariff = parseFloat(weeklyUsagesData[weeklyUsagesData.length - 1].highTariff);
+        if (weeklyUsagesData.length === 0) {
+            return {
+                lowTariffConsumption: '0.00',
+                highTariffConsumption: '0.00',
+                totalCost: '0.00',
+                totalConsumption: '0.00'
+            };
+        }
+
+        const firstReadingLowTariff = parseFloat(weeklyUsagesData[0].lowTariff ?? 0);
+        const firstReadingHighTariff = parseFloat(weeklyUsagesData[0].highTariff ?? 0);
+        const lastReadingLowTariff = parseFloat(weeklyUsagesData[weeklyUsagesData.length - 1].lowTariff ?? 0);
+        const lastReadingHighTariff = parseFloat(weeklyUsagesData[weeklyUsagesData.length - 1].highTariff ?? 0);
 
         const weeklyConsumptionLowTariff = lastReadingLowTariff - firstReadingLowTariff;
         const weeklyConsumptionHighTariff = lastReadingHighTariff - firstReadingHighTariff;

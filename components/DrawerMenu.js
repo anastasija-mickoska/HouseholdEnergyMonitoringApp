@@ -12,13 +12,16 @@ const drawerRoutes = [
 
 export default function DrawerMenu({ navigation, closeDrawer }) {
   const [role, setRole] = useState(null);
+  const [householdId, setHouseholdId] = useState(null);
 
   useEffect(()=> {
-    const getRole = async() => {
+    const loadData = async() => {
       const storedRole = await AsyncStorage.getItem('role');
+      const storedHouseholdId = await AsyncStorage.getItem('householdId');
       setRole(storedRole);
+      setHouseholdId(storedHouseholdId);
     }
-    getRole();
+    loadData();
   }, []);
 
   return (
@@ -29,15 +32,25 @@ export default function DrawerMenu({ navigation, closeDrawer }) {
           style={styles.drawerItem}
           onPress={() => {
             if(route.name == 'Home') {
-              if(role == 'Admin') {
-                navigation.replace('Admin Home');
+              if(householdId != null) {
+                  if(role == 'Admin') {
+                    navigation.replace('Admin Home');
+                  }
+                  else if(role === 'User') {
+                    navigation.replace('User Home');
+                  }
               }
-              else if(role === 'User') {
-                navigation.replace('User Home');
+              else {
+                navigation.replace('Welcome');
               }
             }
             else {
-              navigation.replace(route.name);
+                if(householdId == null && route.name != 'Logout') {
+                  navigation.replace('Welcome');
+                }
+                else {
+                  navigation.replace(route.name);
+                }
             }
             closeDrawer();
           }}

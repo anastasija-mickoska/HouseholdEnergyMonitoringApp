@@ -6,6 +6,7 @@ const {
     getHouseholdByName,
     joinHousehold, 
     getUserById,
+    getUsersForHousehold,
     getElectricityMeterUsagesForHousehold, 
     getApplianceEnergyUsagesByUser, 
     getApplianceEnergyUsagesForHousehold, 
@@ -13,7 +14,6 @@ const {
     addElectricityMeterUsage, 
     changeUsageLimits, 
     setUserHousehold,
-    getNotificationsForHousehold,
     getWeeklyApplianceUsageByUser,
     getMonthlyApplianceUsageByUser,
  } = require('./firestoreService');
@@ -24,6 +24,7 @@ const {
     getMonthlyElectricityCostAndConsumption,
     getAppliances,
 } = require('./usagesService');
+const {sendPushNotification, addNotification, getNotificationsForHousehold, setUserFcmToken} = require('./notificationsService');
 const authenticate = require('./config/auth');
 const { Timestamp } = require('firebase-admin/firestore');
 
@@ -75,15 +76,21 @@ router.get('/users/:id', authenticate, async(req, res)=> {
   }
 }); 
 
-router.patch('/users/:id', authenticate, async(req,res) => {
+router.patch('/users/:id', authenticate, async (req, res) => {
   try {
     const id = req.params.id;
-    const {householdId} = req.body;
-    await setUserHousehold(id, householdId);
-    res.status(200).json({message:'Household attached to user.'});
-  }
-  catch(error) {
-    res.status(500).json({error: error.message});
+    const { householdId, token } = req.body;
+    if (householdId !== undefined) {
+      await setUserHousehold(id, householdId);
+      return res.status(200).json({ message: 'Household attached to user.' });
+    }
+    if (token !== undefined) {
+      await setUserFcmToken(id, token);
+      return res.status(200).json({ message: 'FCM token updated for user.' });
+    }
+    res.status(400).json({ error: 'No valid field provided. Provide either householdId or token.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -126,6 +133,42 @@ router.post('/electricityMeterUsages', authenticate, async(req,res)=> {
     date: Timestamp.fromDate(new Date(date)) 
     };
     const returnData = await addElectricityMeterUsage(usageData);
+
+    const household = await getHouseholdById(householdId);
+    const weeklyLimit = Number(household.weeklyLimit);
+    const monthlyLimit = Number(household.monthlyLimit);
+    const weeklyUsageData = await getWeeklyElectricityCostAndConsumption(householdId);
+    const weeklyUsage = Number(weeklyUsageData.totalConsumption);
+    const monthlyUsageData = await getMonthlyElectricityCostAndConsumption(householdId);
+    const monthlyUsage = Number(monthlyUsageData.totalConsumption);
+
+    const users = await getUsersForHousehold(householdId);
+    const tokens = users.map(user => user.fcmToken).filter(Boolean);
+
+    const notificationsToSend = [];
+
+    if (weeklyUsage >= 0.8 * Number(weeklyLimit) && weeklyUsage < Number(weeklyLimit)) {
+        notificationsToSend.push('You have reached 80% of your household weekly limit!');
+    }
+    if (weeklyUsage >= Number(weeklyLimit)) {
+        notificationsToSend.push('You have reached your household weekly limit!');
+    }
+    if (monthlyUsage >= 0.8 * Number(monthlyLimit) && monthlyUsage < Number(monthlyLimit)) {
+        notificationsToSend.push('You have reached 80% of your household monthly limit!');
+    }
+    if (monthlyUsage >= Number(monthlyLimit)) {
+        notificationsToSend.push('You have reached your household monthly limit!');
+    }
+
+    for (const message of notificationsToSend) {
+        for (const token of tokens) {
+            await sendPushNotification(token, 'Warning', message, {
+                sentAt: new Date().toISOString()
+            });
+        }
+        await addNotification(householdId, tokens, 'Warning', message);
+    }
+
     res.status(201).json({message:'Electricity meter usage added.', totalKWh: returnData.totalKWh, totalCost: returnData.totalCost});
   }
   catch(error){
@@ -157,6 +200,38 @@ router.patch('/households/:householdId/limits', authenticate, async(req, res) =>
     const {weeklyLimit, monthlyLimit} = req.body;
     const householdId = req.params.householdId;
     await changeUsageLimits(householdId, weeklyLimit, monthlyLimit);
+
+    const weeklyUsageData = await getWeeklyElectricityCostAndConsumption(householdId);
+    const weeklyUsage = Number(weeklyUsageData.totalConsumption);
+    const monthlyUsageData = await getMonthlyElectricityCostAndConsumption(householdId);
+    const monthlyUsage = Number(monthlyUsageData.totalConsumption);
+
+    const users = await getUsersForHousehold(householdId);
+    const tokens = users.map(user => user.fcmToken).filter(Boolean);
+
+    const notificationsToSend = [];
+
+    if (weeklyUsage >= 0.8 * Number(weeklyLimit) && weeklyUsage < Number(weeklyLimit)) {
+        notificationsToSend.push('You have reached 80% of your household weekly limit!');
+    }
+    if (weeklyUsage >= Number(weeklyLimit)) {
+        notificationsToSend.push('You have reached your household weekly limit!');
+    }
+    if (monthlyUsage >= 0.8 * Number(monthlyLimit) && monthlyUsage < Number(monthlyLimit)) {
+        notificationsToSend.push('You have reached 80% of your household monthly limit!');
+    }
+    if (monthlyUsage >= Number(monthlyLimit)) {
+        notificationsToSend.push('You have reached your household monthly limit!');
+    }
+
+    for (const message of notificationsToSend) {
+        for (const token of tokens) {
+            await sendPushNotification(token, 'Warning', message, {
+                sentAt: new Date().toISOString()
+            });
+        }
+        await addNotification(householdId, tokens, 'Warning', message);
+    }
     res.status(200).json({message: 'Limits saved.'});
   }
   catch(error){
