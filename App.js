@@ -19,7 +19,6 @@ import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useState, useCallback, useEffect } from 'react';
 import { View, StatusBar, Alert } from 'react-native';
-
 import messaging from '@react-native-firebase/messaging';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -112,6 +111,24 @@ const App = () => {
   if (!fontsLoaded) {
     return null;
   }
+
+  useEffect(() => {
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      Alert.alert('New Notification', remoteMessage.notification?.body);
+    });
+
+    messaging().onNotificationOpenedApp(remoteMessage => {
+      console.log('Notification caused app to open from background state:', remoteMessage);
+    });
+
+    messaging().getInitialNotification().then(remoteMessage => {
+        if (remoteMessage) {
+          console.log('Notification caused app to open from quit state:', remoteMessage);
+        }
+      });
+
+    return unsubscribe;
+  }, []);
 
   return (
     <View onLayout={onLayoutRootView} style={{ flex: 1 }}>

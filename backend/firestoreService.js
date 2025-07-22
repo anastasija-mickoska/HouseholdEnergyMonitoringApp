@@ -48,11 +48,11 @@ const createHousehold = async(household) => {
         const householdCode = household.householdCode;
         const exists = checkIfHouseholdExists(householdName, householdCode);
         if(!exists) {
-            const doc = await db.collection('Households').add(household);
-            return doc.id; 
+            throw new Error('Household already exists!');
         }
         else {
-            throw new Error('Household already exists!');
+            const doc = await db.collection('Households').add(household);
+            return doc.id; 
         }
 
     }
@@ -195,7 +195,7 @@ const checkIfElectricityMeterUsageEntryExists = async(data) => {
         return !snapshot.empty;    
     }
     catch(error) {
-        console.error('Error checking if appliance usage exists!', error);
+        console.error('Error checking if electricity meter usage exists!', error);
         throw error;
     }
 };
@@ -211,13 +211,13 @@ const addElectricityMeterUsage = async(data) => {
             date
         };
         const exists = await checkIfElectricityMeterUsageEntryExists(newData);
-        if(!exists) {
+        if(exists) {
+            throw new Error('This electricity meter data already exists!');
+        }
+        else {
             const totalCostAndConsumption = await calculateUsageConsumptionAndCost(data);
             const doc = await db.collection('Electricity Meter Usages').add(data);
             return totalCostAndConsumption;
-        }
-        else {
-            throw new Error('This electricity meter data already exists!');
         }
     }
     catch(error) {
@@ -250,13 +250,13 @@ const addApplianceEnergyUsage = async(data) => {
             startingTime
         };
         const exists = await checkIfApplianceUsageEntryExists(newData);
-        if(!exists) {
+        if(exists) {
+            throw new Error('This appliance energy usage already exists!');
+        }
+        else {
             const doc = await db.collection('Appliance Energy Usages').add(data);
             const totalCostAndConsumption = await calculateUsageConsumptionAndCost(data);
             return totalCostAndConsumption;
-        }
-        else {
-            throw new Error('This appliance energy usage already exists!');
         }
     }
     catch(error) {

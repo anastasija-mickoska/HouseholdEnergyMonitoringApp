@@ -21,16 +21,16 @@ const NotificationsList = ({navigation}) => {
         };
         getHouseholdId();
         const fetchNotifications = async() => {
-        const res = await fetch(`http://192.168.1.108:8000/notifications/${householdId}`, {
-            method:'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        const results = await res.json();
-        console.log(results);
-        setNotifications(results);
-    }
+            const res = await fetch(`http://192.168.1.108:8000/notifications/${householdId}`, {
+                method:'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const results = await res.json();
+            console.log(results);
+            setNotifications(results);
+        }
         fetchNotifications();
     }, []);
 

@@ -166,7 +166,7 @@ router.post('/electricityMeterUsages', authenticate, async(req,res)=> {
                 sentAt: new Date().toISOString()
             });
         }
-        await addNotification(householdId, tokens, 'Warning', message);
+        await addNotification(householdId, tokens, 'Warning', message, userId);
     }
 
     res.status(201).json({message:'Electricity meter usage added.', totalKWh: returnData.totalKWh, totalCost: returnData.totalCost});
@@ -230,7 +230,7 @@ router.patch('/households/:householdId/limits', authenticate, async(req, res) =>
                 sentAt: new Date().toISOString()
             });
         }
-        await addNotification(householdId, tokens, 'Warning', message);
+        await addNotification(householdId, tokens, 'Warning', message, userId);
     }
     res.status(200).json({message: 'Limits saved.'});
   }
