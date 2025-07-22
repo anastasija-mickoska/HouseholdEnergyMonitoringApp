@@ -219,15 +219,19 @@ const ApplianceUsageInsight = ({title}) => {
                         )
                     }
                 }}/>
-                <PieChart radius={60} data={pieData} isAnimated={true} strokeColor="#F3F3F3" strokeWidth={0.75} focusOnPress/>
+                {pieData && pieData.length > 0 && (
+                    <PieChart radius={60} data={pieData} isAnimated={true} strokeColor="#F3F3F3" strokeWidth={0.75} focusOnPress/>
+                )}
             </View>
             <View>
-                {pieData.map((item, index) => (
-                    <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}>
-                        <View style={{ width: 12, height: 12, backgroundColor: item.color, marginRight: 8, borderRadius: 2 }} />
-                        <Text style={styles.itemText}>{item.text}: {item.value} KWh</Text>
-                    </View>
-                ))}
+                {pieData && pieData.length > 0 ? pieData.map((item, index) => (
+                        <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}>
+                            <View style={{ width: 12, height: 12, backgroundColor: item.color, marginRight: 8, borderRadius: 2 }} />
+                            <Text style={styles.itemText}>{item.text}: {item.value} KWh</Text>
+                        </View>
+                )) : (
+                    <Text style={styles.totalCostText}>No appliance usage data available.</Text>
+                )}
             </View>
             <Text style={styles.totalCostText}>Total cost: {totalCost} den</Text>
             <View style={styles.buttons}>

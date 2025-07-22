@@ -433,33 +433,39 @@ const calculateWeeklyConsumptionForFiveWeeks = async (householdId) => {
 
 const calculateMonthlyConsumptionForFiveMonths = async (householdId) => {
     const readings = await getReadingsForHouseholdForFiveMonths(householdId);
-    
+    const numberOfWeeks = 5;
     const monthlyConsumptions = [];
-
     const now = new Date();
     const startOfCurrentMonth = startOfMonth(now);
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = numberOfWeeks-1; i >= 0; i--) {
         const monthStart = subMonths(startOfCurrentMonth, i);
         const monthEnd = endOfMonth(monthStart);
 
         const readingsInMonth = readings.filter(r => r.date >= monthStart && r.date <= monthEnd);
 
         if (readingsInMonth.length >= 2) {
-            const first = readingsInMonth[0];
-            const last = readingsInMonth[readingsInMonth.length - 1];
+            const sortedReadings = readingsInMonth.sort((a, b) => a.date - b.date);
+            const first = sortedReadings[0];
+            const last = sortedReadings[sortedReadings.length - 1];
 
             const consumptionHigh = last.highTariff - first.highTariff;
             const consumptionLow = last.lowTariff - first.lowTariff;
             const totalConsumption = consumptionHigh + consumptionLow;
 
             monthlyConsumptions.push({
-                monthLabel: monthStart.toLocaleString('default', { month: 'short'}),
+                monthLabel: monthStart.toLocaleString('default', { month: 'short' }),
                 consumption: totalConsumption.toFixed(2),
+            });
+        } else {
+            monthlyConsumptions.push({
+                monthLabel: monthStart.toLocaleString('default', { month: 'short' }),
+                consumption: '0.00',
             });
         }
     }
-    return monthlyConsumptions.reverse(); 
+
+    return monthlyConsumptions;
 };
 
 module.exports = {
