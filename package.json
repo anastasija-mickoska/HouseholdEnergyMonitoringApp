@@ -10,6 +10,7 @@
     "dev": "expo start --dev-client"
   },
   "dependencies": {
+    "@notifee/react-native": "^9.1.8",
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-native-community/datetimepicker": "8.4.1",
     "@react-native-firebase/app": "^22.4.0",
@@ -31,7 +32,6 @@
     "react-native": "0.79.5",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-gifted-charts": "^1.4.63",
-    "react-native-push-notification": "^8.1.1",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "~5.4.0",
     "react-native-screens": "~4.11.1",

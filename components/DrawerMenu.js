@@ -18,6 +18,10 @@ export default function DrawerMenu({ navigation, closeDrawer }) {
     const loadData = async() => {
       const storedRole = await AsyncStorage.getItem('role');
       const storedHouseholdId = await AsyncStorage.getItem('householdId');
+      if (storedHouseholdId === 'null' || storedHouseholdId === 'undefined') {
+        storedHouseholdId = null;
+      }
+      console.log('Household id:', storedHouseholdId, 'Type:', typeof storedHouseholdId);
       setRole(storedRole);
       setHouseholdId(storedHouseholdId);
     }
@@ -31,26 +35,18 @@ export default function DrawerMenu({ navigation, closeDrawer }) {
           key={route.name}
           style={styles.drawerItem}
           onPress={() => {
-            if(route.name == 'Home') {
-              if(householdId != null) {
-                  if(role == 'Admin') {
-                    navigation.replace('Admin Home');
-                  }
-                  else if(role === 'User') {
-                    navigation.replace('User Home');
-                  }
+            if (route.name === 'Logout') {
+              navigation.replace('Logout');
+            } else if (!householdId) {
+              navigation.replace('Welcome');
+            } else if (route.name === 'Home') {
+              if (role === 'Admin') {
+                navigation.replace('Admin Home');
+              } else if (role === 'User') {
+                navigation.replace('User Home');
               }
-              else {
-                navigation.replace('Welcome');
-              }
-            }
-            else {
-                if(householdId == null && route.name != 'Logout') {
-                  navigation.replace('Welcome');
-                }
-                else {
-                  navigation.replace(route.name);
-                }
+            } else {
+              navigation.replace(route.name);
             }
             closeDrawer();
           }}

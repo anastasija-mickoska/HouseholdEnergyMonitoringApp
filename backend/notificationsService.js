@@ -3,48 +3,28 @@ const {db, admin} = require('./config/firebaseConfig');
 const sendPushNotification = async (userFcmToken, title, body, data = {}) => {
   try {
     const message = {
-        token: userFcmToken,
+      token: userFcmToken,
+      notification: {
+        title,
+        body,
+      },
+      android: {
+        priority: "high",
         notification: {
-            title: title,
-            body: body,
-            sound: 'default',  
+          channelId: "high_importance_channel",
+          sound: "default",
         },
-        android: {
-        priority: "high",   
-        notification: {
-            channelId: "high_importance_channel",  
-            sound: "default",
-        }
-        },
-        data: data,
+      },
+      data,
     };
 
+    console.log('Sending message to user with fcmToken: ', userFcmToken);
     await admin.messaging().send(message);
+    return true;
+
   } catch (error) {
-    const invalidTokenErrors = [
-      "messaging/invalid-argument",
-      "messaging/registration-token-not-registered",
-      "messaging/invalid-registration-token",
-    ];
-    if (invalidTokenErrors.includes(error.code)) {
-      console.warn("Invalid FCM token. Removing from user...");
-      try {
-        const snapshot = await db.collection('users').where("fcmToken", "==", userFcmToken).get();
-        if (!snapshot.empty) {
-          for (const doc of snapshot.docs) {
-            await doc.ref.update({ fcmToken: null });
-            console.log(`FCM token removed for user: ${doc.id}`);
-          }
-        } else {
-          console.log("No user found with this FCM token.");
-        }
-      } catch (updateError) {
-        console.error("Failed to remove FCM token from user!", updateError);
-      }
-      return;
-    }
     console.error("Unexpected error sending notification:", error);
-    throw error;
+    return false;
   }
 };
 

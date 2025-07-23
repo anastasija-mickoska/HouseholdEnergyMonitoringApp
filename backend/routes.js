@@ -162,6 +162,7 @@ router.post('/electricityMeterUsages', authenticate, async(req,res)=> {
 
     for (const message of notificationsToSend) {
         for (const token of tokens) {
+          console.log('User token:', token);
             await sendPushNotification(token, 'Warning', message, {
                 sentAt: new Date().toISOString()
             });
@@ -225,12 +226,19 @@ router.patch('/households/:householdId/limits', authenticate, async(req, res) =>
     }
 
     for (const message of notificationsToSend) {
-        for (const token of tokens) {
-            await sendPushNotification(token, 'Warning', message, {
-                sentAt: new Date().toISOString()
-            });
+      const validTokens = [];
+
+      for (const token of tokens) {
+        const result = await sendPushNotification(token, 'Warning', message, {
+          sentAt: new Date().toISOString()
+        });
+        if (result === true) {
+          validTokens.push(token);
         }
-        await addNotification(householdId, tokens, 'Warning', message);
+      }
+      if (validTokens.length > 0) {
+        await addNotification(householdId, validTokens, 'Warning', message);
+      }
     }
     res.status(200).json({message: 'Limits saved.'});
   }
