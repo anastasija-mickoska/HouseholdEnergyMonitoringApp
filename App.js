@@ -21,7 +21,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { View, StatusBar, Alert } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import PushNotification from 'react-native-push-notification';
+import notifee, { AndroidImportance } from '@notifee/react-native';
 
 const Stack = createNativeStackNavigator();
 
@@ -56,17 +56,16 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    PushNotification.createChannel(
-      {
-        channelId: "high_importance_channel", 
-        channelName: "High Importance Notifications",
-        channelDescription: "Used for critical alerts",
-        importance: 4,
-        vibrate: true,
-        soundName: "default",
-      },
-      (created) => console.log(`Notification channel created: ${created}`) 
-    );
+    async function createChannel() {
+      await notifee.createChannel({
+        id: 'high_importance_channel',
+        name: 'High Importance Notifications',
+        importance: AndroidImportance.HIGH,
+        sound: 'default',
+        vibration: true,
+      });
+    }
+    createChannel();
   }, []);
 
   useEffect(() => {
@@ -114,26 +113,25 @@ const App = () => {
     };
   }, []);
 
-    useEffect(() => {
+  useEffect(() => {
     const unsubscribeOnMessage = messaging().onMessage(async remoteMessage => {
-      Alert.alert('New Notification', remoteMessage.notification?.body);
-    });
-
-    const unsubscribeOpenedApp = messaging().onNotificationOpenedApp(remoteMessage => {
-      console.log('Notification caused app to open from background state:', remoteMessage);
-    });
-
-    messaging().getInitialNotification().then(remoteMessage => {
-        if (remoteMessage) {
-          console.log('Notification caused app to open from quit state:', remoteMessage);
-        }
+      await notifee.displayNotification({
+        title: remoteMessage.notification?.title || 'New Notification',
+        body: remoteMessage.notification?.body || '',
+        android: {
+          channelId: 'high_importance_channel',
+          importance: AndroidImportance.HIGH,
+          sound: 'default',
+          pressAction: { id: 'default' },
+        },
       });
-
+    });
+    
     return () => {
       unsubscribeOnMessage();
-      unsubscribeOpenedApp(); 
     };
   }, []);
+
 
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {
