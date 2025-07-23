@@ -21,13 +21,13 @@ import { useState, useCallback, useEffect } from 'react';
 import { View, StatusBar, Alert } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import PushNotification from 'react-native-push-notification';
 
 const Stack = createNativeStackNavigator();
 
 SplashScreen.preventAutoHideAsync();
 
 const sendTokenToBackend = async (userId, fcmToken, token) => {
-  console.log(`Send token to backend for user ${userId}:`, fcmToken);
   const res = await fetch(`http://192.168.1.108:8000/users/${userId}`, {
     method: 'PATCH',
     headers: {
@@ -56,6 +56,20 @@ const App = () => {
   }, []);
 
   useEffect(() => {
+    PushNotification.createChannel(
+      {
+        channelId: "high_importance_channel", 
+        channelName: "High Importance Notifications",
+        channelDescription: "Used for critical alerts",
+        importance: 4,
+        vibrate: true,
+        soundName: "default",
+      },
+      (created) => console.log(`Notification channel created: ${created}`) 
+    );
+  }, []);
+
+  useEffect(() => {
     let unsubscribeTokenRefresh;
 
     async function setupFCM() {
@@ -63,7 +77,6 @@ const App = () => {
         const userId = await AsyncStorage.getItem('id');
         const fetchedToken = await AsyncStorage.getItem('token');
         if (!userId || !fetchedToken) {
-          console.log('No logged-in user detected, skipping FCM setup');
           return;
         }
 
@@ -86,7 +99,6 @@ const App = () => {
         }
 
         unsubscribeTokenRefresh = messaging().onTokenRefresh(async (newToken) => {
-          console.log('FCM token refreshed:', newToken);
           await sendTokenToBackend(userId, newToken, fetchedToken);
           await AsyncStorage.setItem('fcmToken', newToken);
         });
@@ -102,22 +114,12 @@ const App = () => {
     };
   }, []);
 
-  const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) {
-      await SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-
-  if (!fontsLoaded) {
-    return null;
-  }
-
-  useEffect(() => {
-    const unsubscribe = messaging().onMessage(async remoteMessage => {
+    useEffect(() => {
+    const unsubscribeOnMessage = messaging().onMessage(async remoteMessage => {
       Alert.alert('New Notification', remoteMessage.notification?.body);
     });
 
-    messaging().onNotificationOpenedApp(remoteMessage => {
+    const unsubscribeOpenedApp = messaging().onNotificationOpenedApp(remoteMessage => {
       console.log('Notification caused app to open from background state:', remoteMessage);
     });
 
@@ -127,8 +129,21 @@ const App = () => {
         }
       });
 
-    return unsubscribe;
+    return () => {
+      unsubscribeOnMessage();
+      unsubscribeOpenedApp(); 
+    };
   }, []);
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <View onLayout={onLayoutRootView} style={{ flex: 1 }}>

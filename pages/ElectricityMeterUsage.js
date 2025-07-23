@@ -41,7 +41,6 @@ const ElectricityMeterUsage = ({navigation}) => {
             lowTariff: Number(lowTariff),
             date: new Date(electricityMeterSubmitDate),
           };
-          //TODO: Check if there is already a same entry as this one
           const res = await fetch('http://192.168.1.108:8000/electricityMeterUsages', {
             method:'POST',
             headers: {

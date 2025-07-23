@@ -219,7 +219,7 @@ const ApplianceUsageInsight = ({title}) => {
                         )
                     }
                 }}/>
-                {pieData && pieData.length > 0 && (
+                {pieData && pieData.length > 1 && (
                     <PieChart radius={60} data={pieData} isAnimated={true} strokeColor="#F3F3F3" strokeWidth={0.75} focusOnPress/>
                 )}
             </View>
@@ -230,7 +230,7 @@ const ApplianceUsageInsight = ({title}) => {
                             <Text style={styles.itemText}>{item.text}: {item.value} KWh</Text>
                         </View>
                 )) : (
-                    <Text style={styles.totalCostText}>No appliance usage data available.</Text>
+                    <Text style={styles.itemText}>No appliance usage data available.</Text>
                 )}
             </View>
             <Text style={styles.totalCostText}>Total cost: {totalCost} den</Text>

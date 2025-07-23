@@ -1,29 +1,56 @@
 const {db, admin} = require('./config/firebaseConfig');
 
 const sendPushNotification = async (userFcmToken, title, body, data = {}) => {
-    try {
-        const message = {
+  try {
+    const message = {
         token: userFcmToken,
         notification: {
             title: title,
-            body: body
+            body: body,
+            sound: 'default',  
         },
-        data: data
-        };
-        console.log('Before sending push notification:');
-        const response = await admin.messaging().send(message);
-        console.log('Successfully sent message:', response);
+        android: {
+        priority: "high",   
+        notification: {
+            channelId: "high_importance_channel",  
+            sound: "default",
+        }
+        },
+        data: data,
+    };
+
+    await admin.messaging().send(message);
+  } catch (error) {
+    const invalidTokenErrors = [
+      "messaging/invalid-argument",
+      "messaging/registration-token-not-registered",
+      "messaging/invalid-registration-token",
+    ];
+    if (invalidTokenErrors.includes(error.code)) {
+      console.warn("Invalid FCM token. Removing from user...");
+      try {
+        const snapshot = await db.collection('users').where("fcmToken", "==", userFcmToken).get();
+        if (!snapshot.empty) {
+          for (const doc of snapshot.docs) {
+            await doc.ref.update({ fcmToken: null });
+            console.log(`FCM token removed for user: ${doc.id}`);
+          }
+        } else {
+          console.log("No user found with this FCM token.");
+        }
+      } catch (updateError) {
+        console.error("Failed to remove FCM token from user!", updateError);
+      }
+      return;
     }
-    catch(error) {
-        console.error('Error sending push notification!', error);
-        throw error;
-    }
+    console.error("Unexpected error sending notification:", error);
+    throw error;
+  }
 };
 
-const addNotification = async(householdId, tokens, title, notification, userId) => {
+const addNotification = async(householdId, tokens, title, notification) => {
     try {
         await db.collection('Notifications').add({
-            userId,
             householdId,
             tokens,
             title,
@@ -40,7 +67,6 @@ const getNotificationsForHousehold = async(householdId) => {
     try{
         const snapshot = await db.collection('Notifications').where('householdId' , '==', householdId).get();
         const notifications = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-        console.log('Notifications:', notifications);
         return notifications;
     }
     catch(error) {

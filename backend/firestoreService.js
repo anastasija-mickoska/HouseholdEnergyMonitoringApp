@@ -33,7 +33,7 @@ const getHouseholdByName = async(name) => {
         if (household.empty) {
             throw new Error('Household with this name does not exist!');
         }
-        const householdId = household.id;
+        const householdId = household.docs[0].id;
         return householdId;
     }
     catch(error) {
@@ -191,7 +191,11 @@ const getApplianceEnergyUsagesByUser = async(userId, type) => {
 
 const checkIfElectricityMeterUsageEntryExists = async(data) => {
     try {
-        const snapshot = await db.collection('Electricity Meter Usages').where('lowTariff', '==', data.lowTariff).where('highTariff', '==', data.highTariff).where('date', '==', data.date).get();
+        const snapshot = await db.collection('Electricity Meter Usages').where('lowTariff', '==', data.lowTariff)
+        .where('highTariff', '==', data.highTariff)
+        .where('date', '==', data.date)
+        .where('householdId', '==', data.householdId)
+        .get();
         return !snapshot.empty;    
     }
     catch(error) {
@@ -205,10 +209,12 @@ const addElectricityMeterUsage = async(data) => {
         const lowTariff = data.lowTariff;
         const highTariff = data.highTariff;
         const date = data.date;
+        const householdId = data.householdId
         const newData = {
             lowTariff,
             highTariff,
-            date
+            date,
+            householdId
         };
         const exists = await checkIfElectricityMeterUsageEntryExists(newData);
         if(exists) {
@@ -228,7 +234,13 @@ const addElectricityMeterUsage = async(data) => {
 
 const checkIfApplianceUsageEntryExists = async(data) => {
     try {
-        const snapshot = await db.collection('Appliance Energy Usages').where('appliance', '==', data.appliance).where('timeDuration', '==', data.timeDuration).where('date', '==', data.date).where('startingTime','==', data.startingTime).get();
+        const snapshot = await db.collection('Appliance Energy Usages')
+        .where('appliance', '==', data.appliance)
+        .where('timeDuration', '==', data.timeDuration)
+        .where('date', '==', data.date)
+        .where('startingTime','==', data.startingTime)
+        .where('householdId', '==', data.householdId)
+        .get();
         return !snapshot.empty;    
     }
     catch(error) {
@@ -243,11 +255,13 @@ const addApplianceEnergyUsage = async(data) => {
         const timeDuration = data.timeDuration;
         const date = data.date;
         const startingTime = data.startingTime;
+        const householdId = data.householdId
         const newData = {
             appliance,
             timeDuration,
             date,
-            startingTime
+            startingTime,
+            householdId
         };
         const exists = await checkIfApplianceUsageEntryExists(newData);
         if(exists) {

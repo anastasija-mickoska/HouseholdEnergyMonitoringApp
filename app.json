@@ -24,11 +24,10 @@
       "supportsTablet": true
     },
     "android": {
-      "googleServicesFile": "./google-services.json",
       "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#f3f3f3"
       },
       "edgeToEdgeEnabled": true,
       "permissions": ["NOTIFICATIONS"]

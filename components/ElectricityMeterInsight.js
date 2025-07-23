@@ -143,7 +143,6 @@ const ElectricityMeterInsight = () => {
                 Alert.alert(json.error);
             }
             else {
-                console.log('Weekly:', json);
                 setChartDataWeekly(json.map((item,index) => ({
                     value: parseFloat(item.consumption),
                     label: item.weekLabel,
@@ -215,7 +214,8 @@ const ElectricityMeterInsight = () => {
                 barWidth={8} 
                 barBorderRadius={8}
                 height={120}
-                width = {140} 
+                width={100}
+                spacing={12}
                 yAxisColor="transparent"
                 xAxisColor={'#1F2F98'}
                 xAxisLabelTextStyle={{ color: '#1F2F98', fontSize: 6, }}

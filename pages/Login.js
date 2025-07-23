@@ -26,7 +26,6 @@ const Login = ({ navigation }) => {
           authStatus === messaging.AuthorizationStatus.PROVISIONAL;
         if (enabled) {
           fcmToken = await messaging().getToken();
-          console.log('FCM Token:', fcmToken);
           await updateDoc(doc(db, 'users', user.uid), {
             fcmToken: fcmToken
           });

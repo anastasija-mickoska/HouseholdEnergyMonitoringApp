@@ -27,7 +27,6 @@ const Register = ({navigation}) => {
           authStatus === messaging.AuthorizationStatus.PROVISIONAL;
         if (enabled) {
           fcmToken = await messaging().getToken();
-          console.log('FCM Token:', fcmToken);
         }
       } catch (error) {
         console.warn('FCM permission/token error:', error);

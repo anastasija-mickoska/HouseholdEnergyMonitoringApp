@@ -57,7 +57,7 @@ router.patch('/households/:householdName', authenticate, async(req, res)=> {
     const {userId, householdCode} = req.body;
     const householdId = await getHouseholdByName(householdName);
     await joinHousehold(householdId, userId, householdCode, householdName);
-    res.status(200).json({message:'User added to household.'});
+    res.status(200).json({message:'User added to household.', householdId: householdId});
   }
   catch(error) {
     console.error(error);
@@ -166,7 +166,7 @@ router.post('/electricityMeterUsages', authenticate, async(req,res)=> {
                 sentAt: new Date().toISOString()
             });
         }
-        await addNotification(householdId, tokens, 'Warning', message, userId);
+        await addNotification(householdId, tokens, 'Warning', message);
     }
 
     res.status(201).json({message:'Electricity meter usage added.', totalKWh: returnData.totalKWh, totalCost: returnData.totalCost});
@@ -230,7 +230,7 @@ router.patch('/households/:householdId/limits', authenticate, async(req, res) =>
                 sentAt: new Date().toISOString()
             });
         }
-        await addNotification(householdId, tokens, 'Warning', message, userId);
+        await addNotification(householdId, tokens, 'Warning', message);
     }
     res.status(200).json({message: 'Limits saved.'});
   }
