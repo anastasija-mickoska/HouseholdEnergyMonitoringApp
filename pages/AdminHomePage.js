@@ -19,6 +19,7 @@ const AdminHomePage = ({ navigation }) => {
     const [monthlyUsage, setMonthlyUsage] = useState(null);
     const [weeklyCost, setWeeklyCost] = useState(null);
     const [monthlyCost, setMonthlyCost] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const initData = async () => {
@@ -34,18 +35,26 @@ const AdminHomePage = ({ navigation }) => {
     }, []);
 
     useEffect(() => {
-        if (userId && token) {
-            fetchUserName();
-        }
-    }, [userId, token]);
+        const loadData = async () => {
+            try {
+                if (userId && token) {
+                    await fetchUserName();
+                }
+                if (householdId && token) {
+                    await fetchUsageLimits();
+                    await fetchElectricityCostAndConsumption();
+                }
+            } catch (err) {
+                console.error("Data load error:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    useEffect(() => {
-        if (householdId && token) {
-            fetchUsageLimits();
-            fetchElectricityCostAndConsumption();
+        if (userId && householdId && token) {
+            loadData();
         }
-    }, [householdId, token]);
-
+    }, [userId, householdId, token]);
 
     const fetchUserName = async() => {
         try {
@@ -134,7 +143,18 @@ const AdminHomePage = ({ navigation }) => {
     }
     const handleAddButton = () => {
         navigation.navigate('Add Usage');
-    }    
+    }   
+    
+    if(loading) {
+        return(
+            <PageLayout navigation={navigation}>
+                <ScrollView contentContainerStyle={styles.scrollContainer}>
+                    <Text style={styles.title}>Dashboard</Text>
+                    <Text style={styles.welcomeText}>Loading data...</Text>
+                </ScrollView>
+            </PageLayout>
+        )
+    }
 
     return (
         <PageLayout navigation={navigation}>

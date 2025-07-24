@@ -40,7 +40,6 @@ const Register = ({navigation}) => {
         fcmToken: fcmToken
       });
 
-      Alert.alert('Registered:', user.email);
       navigation.navigate('Login');
     } catch (error) {
       Alert.alert("Registration failed", error.message);

@@ -13,6 +13,7 @@ const buttonImgMap = {
 const CustomForm = ({title, registerQuestion, fields, buttonText, buttonIcon, onSubmit}) => {
     const [formData, setFormData] = useState({});
     const [showDatePickers, setShowDatePickers] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const navigation = useNavigation();
 
     const handleChange = (name, value) => {
@@ -42,6 +43,7 @@ const CustomForm = ({title, registerQuestion, fields, buttonText, buttonIcon, on
             return;
           }
         }
+        setIsSubmitting(true);
         onSubmit(formData); 
     };
 
@@ -73,6 +75,7 @@ const CustomForm = ({title, registerQuestion, fields, buttonText, buttonIcon, on
               {showDatePickers[field.name] && (
                 <DateTimePicker
                   value={formData[field.name] ? new Date(formData[field.name]) : new Date()}
+                  maximumDate={new Date()}
                   mode="date"
                   display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                   onChange={(event, selectedDate) => {
@@ -150,8 +153,8 @@ const CustomForm = ({title, registerQuestion, fields, buttonText, buttonIcon, on
                     {renderInputField(field)}
                 </View>
                 ))}
-                <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-                    <Text style={styles.buttonText}>{buttonText}</Text>
+                <TouchableOpacity style={[styles.button, isSubmitting && styles.disabled]} onPress={handleSubmit} disabled={isSubmitting}>
+                    <Text style={styles.buttonText}>{isSubmitting ? "Submitting..." : buttonText }</Text>
                     <Image source={buttonImgMap[buttonIcon]}/>
                 </TouchableOpacity>
             </View>
@@ -208,6 +211,9 @@ const styles = StyleSheet.create({
     justifyContent:'center',
     alignItems:'center',
     marginVertical:20
+  },
+  disabled: {
+    backgroundColor:'#0796DE'
   },
   buttonText: {
     color: '#F3F3F3',

@@ -122,6 +122,7 @@ const App = () => {
           channelId: 'high_importance_channel',
           importance: AndroidImportance.HIGH,
           sound: 'default',
+          smallIcon: 'lightbulb',
           pressAction: { id: 'default' },
         },
       });

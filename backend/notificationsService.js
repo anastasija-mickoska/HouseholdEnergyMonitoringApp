@@ -7,6 +7,7 @@ const sendPushNotification = async (userFcmToken, title, body, data = {}) => {
       notification: {
         title,
         body,
+        icon:"lightbulb"
       },
       android: {
         priority: "high",
@@ -17,8 +18,6 @@ const sendPushNotification = async (userFcmToken, title, body, data = {}) => {
       },
       data,
     };
-
-    console.log('Sending message to user with fcmToken: ', userFcmToken);
     await admin.messaging().send(message);
     return true;
 
@@ -73,5 +72,5 @@ module.exports = {
     sendPushNotification,
     addNotification,
     getNotificationsForHousehold,
-    setUserFcmToken
+    setUserFcmToken,
 };

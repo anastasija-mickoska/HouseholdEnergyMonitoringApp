@@ -23,6 +23,7 @@ const ElectricityMeterInsight = () => {
     const [chartDataMonthly, setChartDataMonthly] = useState([]);
     const [value2Weekly,setValue2Weekly] = useState(0);
     const [value2Monthly,setValue2Monthly] = useState(0);
+    const [loading, setLoading] = useState(true);
 
     useEffect(()=> {
         const loadData = async() => {
@@ -37,37 +38,35 @@ const ElectricityMeterInsight = () => {
     }, []);
 
     useEffect(() => {
-        if (householdId && token) {
-            fetchUsageLimits();
-            fetchElectricityCostAndConsumption();
-            fetchPreviousConsumption();
-        }
-    }, [householdId, token]);
+        const fetchData = async () => {
+            try {
+                if (!householdId || !token) return;
+                await fetchUsageLimits();
+                await fetchElectricityCostAndConsumption();
+                await fetchPreviousConsumption();
+            } catch (error) {
+                console.error('Error fetching data!', error);
+            }
+        };
+        fetchData();
+    }, [householdId, token, activePeriod]);
 
-    useEffect(()=> {
-        if (householdId && token && weeklyLimit !== null && monthlyLimit !== null && weeklyUsage !== null && monthlyUsage !== null) {
-            let remainingWeeklyValue = weeklyLimit - weeklyUsage;
-            if(remainingWeeklyValue < 0) {
-                remainingWeeklyValue = 0;
+    useEffect(() => {
+        const fetchDonutChartData = async() => {
+            try {
+                if (weeklyUsage != null && weeklyLimit != null && monthlyUsage != null && monthlyLimit != null) {
+                    fetchActivePeriodData();
+                }
             }
-            setValue2Weekly(remainingWeeklyValue);
-            let remainingMonthlyValue = monthlyLimit - monthlyUsage;
-            if(remainingMonthlyValue < 0) {
-                remainingMonthlyValue = 0;
+            catch(error) {
+                console.error('Error setting data!', error);
             }
-            setValue2Monthly(remainingMonthlyValue);
-            const newData = activePeriod === 'weekly'
-            ? [
-                { value: weeklyUsage, color: '#4ADEDE' },
-                { value: value2Weekly, color: '#E0E0E0' },
-              ]
-            : [
-                { value: monthlyUsage, color: '#4ADEDE' },
-                { value: value2Monthly, color: '#E0E0E0' },
-              ];
-            setData(newData);
+            finally {
+                setLoading(false);
+            }
         }
-    }, [weeklyLimit, monthlyLimit, weeklyUsage, monthlyUsage, token, householdId, activePeriod]);
+        fetchDonutChartData();
+    }, [weeklyUsage, weeklyLimit, monthlyUsage, monthlyLimit, activePeriod]);
 
     const fetchUsageLimits = async() => {
         try {
@@ -172,6 +171,27 @@ const ElectricityMeterInsight = () => {
         }
     }
 
+    const fetchActivePeriodData = async() => {
+        let usage = activePeriod === 'weekly' ? weeklyUsage : monthlyUsage;
+        let limit = activePeriod === 'weekly' ? weeklyLimit : monthlyLimit;
+
+        if (typeof usage !== 'number' || typeof limit !== 'number') return;
+
+        let remaining = Math.max(0, limit - usage);
+
+        if (activePeriod === 'weekly') {
+            setValue2Weekly(remaining);
+        } else {
+            setValue2Monthly(remaining);
+        }
+
+        const newData = [
+            { value: usage, color: '#4ADEDE' },
+            { value: remaining, color: '#E0E0E0' }
+        ];
+        setData(newData);
+    };
+
     const handlePressWeekly = () => {
         setActivePeriod('weekly');
     }
@@ -184,10 +204,27 @@ const ElectricityMeterInsight = () => {
     const totalCost = activePeriod === 'weekly' ? weeklyCost : monthlyCost;
     const barChartData = activePeriod === 'weekly' ? chartDataWeekly : chartDataMonthly;
 
+    const isDataReady =
+    (activePeriod === 'weekly'
+        ? weeklyUsage && weeklyLimit
+        : monthlyUsage && monthlyLimit) &&
+    data.length > 0 &&
+    barChartData.length > 0;
+
+    if(loading || !isDataReady) {
+        return(
+            <View style={styles.container}>
+                <Text style={styles.title}>Electricity Meter Data</Text>
+                <Text style={styles.buttonText}>Loading data...</Text>
+            </View>
+        )
+    }
+
     return(
         <View style={styles.container}>
             <Text style={styles.title}>Electricity Meter Data</Text>
             <View style={styles.charts}>
+                {console.log("Donut chart data:", data)}
                 <PieChart donut radius={60} innerRadius={45} data={data} isAnimated={true} centerLabelComponent={() => {
                     if(weeklyUsage != null && monthlyUsage !=null && weeklyLimit!= null && monthlyLimit !=null) {
                         const usage = activePeriod === 'weekly' ? (weeklyUsage ?? 0) : (monthlyUsage ?? 0);
@@ -210,17 +247,19 @@ const ElectricityMeterInsight = () => {
                         )
                     }
                 }}/>
-                <BarChart data={barChartData}
-                barWidth={8} 
-                barBorderRadius={8}
-                height={120}
-                width={100}
-                spacing={12}
-                yAxisColor="transparent"
-                xAxisColor={'#1F2F98'}
-                xAxisLabelTextStyle={{ color: '#1F2F98', fontSize: 6, }}
-                yAxisTextStyle={{ color: '#1F2F98', fontSize: 6 }}
-                isAnimated animationDuration={800}/>
+                {barChartData.length > 0 && 
+                    <BarChart data={barChartData}
+                    barWidth={8} 
+                    barBorderRadius={8}
+                    height={100}
+                    width={100}
+                    spacing={12}
+                    yAxisColor="transparent"
+                    xAxisColor={'#1F2F98'}
+                    xAxisLabelTextStyle={{ color: '#1F2F98', fontSize: 6, }}
+                    yAxisTextStyle={{ color: '#1F2F98', fontSize: 6 }}
+                    isAnimated animationDuration={800}/>
+                }
             </View>
             <View style={styles.text}>
                 <Text style={styles.insights}>Low tariff consumption:{lowTariff} KWh</Text>

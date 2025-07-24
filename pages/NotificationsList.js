@@ -9,13 +9,14 @@ const formatDate = (timestamp) => {
   if (!timestamp || !timestamp._seconds) return '';
   const date = new Date(timestamp._seconds * 1000);
   const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0'); // months are 0-based
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const year = date.getFullYear();
   return `${day}/${month}/${year}`;
 };
 
 const NotificationsList = ({ navigation }) => {
     const [notifications, setNotifications] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const loadData = async () => {
@@ -24,13 +25,15 @@ const NotificationsList = ({ navigation }) => {
                 const storedHouseholdId = await AsyncStorage.getItem('householdId');
 
                 if (fetchedToken && storedHouseholdId) {
-                    fetchNotifications(fetchedToken, storedHouseholdId);
+                    await fetchNotifications(fetchedToken, storedHouseholdId);
                 }
             } catch (error) {
                 console.error("Error loading token or householdId", error);
             }
+            finally {
+                setLoading(false);
+            }
         };
-
         loadData();
     }, []);
 
@@ -54,6 +57,16 @@ const NotificationsList = ({ navigation }) => {
         }
     };
 
+    if(loading) {
+        return(
+            <PageLayout navigation={navigation}>
+                <View style={styles.container}>
+                    <Text style={styles.title}>Notifications</Text> 
+                    <Text style={styles.text}>Loading notifications...</Text>   
+                </View>
+            </PageLayout>
+        )
+    }
     return (
         <PageLayout navigation={navigation}>
             <View style={styles.container}>

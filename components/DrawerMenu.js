@@ -21,7 +21,6 @@ export default function DrawerMenu({ navigation, closeDrawer }) {
       if (storedHouseholdId === 'null' || storedHouseholdId === 'undefined') {
         storedHouseholdId = null;
       }
-      console.log('Household id:', storedHouseholdId, 'Type:', typeof storedHouseholdId);
       setRole(storedRole);
       setHouseholdId(storedHouseholdId);
     }

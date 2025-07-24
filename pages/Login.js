@@ -51,10 +51,6 @@ const Login = ({ navigation }) => {
         ['id', user.uid],
         ['fcmToken', fcmToken ?? 'null'],
       ]);
-
-      console.log('User details:', role, name, email, householdId, user.uid);
-      Alert.alert('Logged in as:', user.email);
-
       if (!householdId) {
         navigation.navigate('Welcome');
       } else {

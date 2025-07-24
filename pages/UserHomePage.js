@@ -22,6 +22,7 @@ const UserHomePage = ({navigation}) => {
     const [monthlyCost, setMonthlyCost] = useState(null);
     const [totalKWhWeekly, setTotalKWhWeekly] = useState(null);
     const [totalKWhMonthly, setTotalKWhMonthly] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const initData = async () => {
@@ -37,23 +38,27 @@ const UserHomePage = ({navigation}) => {
     }, []);
 
     useEffect(() => {
-        if (userId && token) {
-            fetchUserName();
-        }
-    }, [userId, token]);
+        const loadData = async () => {
+            try {
+                if (userId && token) {
+                    await fetchUserName();
+                    await fetchApplianceUsageForUser();
+                }
+                if (householdId && token) {
+                    await fetchUsageLimits();
+                    await fetchElectricityCostAndConsumption();
+                }
+            } catch (err) {
+                console.error("Data load error:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    useEffect(() => {
-        if (householdId && token) {
-            fetchUsageLimits();
-            fetchElectricityCostAndConsumption();
+        if (userId && householdId && token) {
+            loadData();
         }
-    }, [householdId, token]);
-
-    useEffect(() => {
-        if (userId && token) {
-            fetchApplianceUsageForUser();
-        }
-    }, [userId, token]);
+    }, [userId, householdId, token]);
 
     const fetchUserName = async() => {
         try {
@@ -176,6 +181,17 @@ const UserHomePage = ({navigation}) => {
 
     const handleInsightsButton = () => {
         navigation.navigate('Insights');
+    }
+        
+    if(loading) {
+        return(
+            <PageLayout navigation={navigation}>
+                <ScrollView contentContainerStyle={styles.container}>
+                    <Text style={styles.title}>Dashboard</Text>
+                    <Text style={styles.welcomeText}>Loading data...</Text>
+                </ScrollView>
+            </PageLayout>
+        )
     }
 
     return(

@@ -16,7 +16,7 @@
       }
     },
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image":  "./assets/images/lightbulb.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -26,7 +26,7 @@
     "android": {
       "usesCleartextTraffic": true,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage":  "./assets/images/lightbulb.png",
         "backgroundColor": "#f3f3f3"
       },
       "edgeToEdgeEnabled": true,

@@ -24,9 +24,14 @@ const {
     getMonthlyElectricityCostAndConsumption,
     getAppliances,
 } = require('./usagesService');
-const {sendPushNotification, addNotification, getNotificationsForHousehold, setUserFcmToken} = require('./notificationsService');
+const {sendPushNotification, 
+  addNotification, 
+  getNotificationsForHousehold, 
+  setUserFcmToken,
+  } = require('./notificationsService');
 const authenticate = require('./config/auth');
 const { Timestamp } = require('firebase-admin/firestore');
+const {format} = require('date-fns');
 
 router.post('/households', authenticate, async(req,res)=> {
   try {
@@ -145,31 +150,47 @@ router.post('/electricityMeterUsages', authenticate, async(req,res)=> {
     const users = await getUsersForHousehold(householdId);
     const tokens = users.map(user => user.fcmToken).filter(Boolean);
 
+    const startWeek = format(weeklyUsageData.startOfWeek, 'MMMM dd');
+    const endWeek = format(weeklyUsageData.endOfWeek, 'MMMM dd');
+    const month = format(monthlyUsageData.monthStart, 'MMMM yyyy');
+
     const notificationsToSend = [];
 
+    const sentNotifications = await getNotificationsForHousehold(householdId);
+    const sentNotificationsText = sentNotifications.map((item)=> {
+      return item.notification;
+    });
+
     if (weeklyUsage >= 0.8 * Number(weeklyLimit) && weeklyUsage < Number(weeklyLimit)) {
-        notificationsToSend.push('You have reached 80% of your household weekly limit!');
+        notificationsToSend.push(`80% of the weekly household limit for period ${startWeek} - ${endWeek} reached!`);
     }
     if (weeklyUsage >= Number(weeklyLimit)) {
-        notificationsToSend.push('You have reached your household weekly limit!');
+        notificationsToSend.push(`Weekly household limit for period ${startWeek} - ${endWeek} reached!`);
     }
     if (monthlyUsage >= 0.8 * Number(monthlyLimit) && monthlyUsage < Number(monthlyLimit)) {
-        notificationsToSend.push('You have reached 80% of your household monthly limit!');
+        notificationsToSend.push(`80% of the monthly household limit for ${month} reached!`);
     }
     if (monthlyUsage >= Number(monthlyLimit)) {
-        notificationsToSend.push('You have reached your household monthly limit!');
+        notificationsToSend.push(`Monthly household limit for ${month} reached!`);
     }
-
     for (const message of notificationsToSend) {
-        for (const token of tokens) {
-          console.log('User token:', token);
-            await sendPushNotification(token, 'Warning', message, {
-                sentAt: new Date().toISOString()
-            });
-        }
-        await addNotification(householdId, tokens, 'Warning', message);
-    }
+      if(sentNotificationsText.includes(message)) {
+        continue;
+      }
+      const validTokens = [];
 
+      for (const token of tokens) {
+        const result = await sendPushNotification(token, 'Warning', message, {
+          sentAt: new Date().toISOString()
+        });
+        if (result === true) {
+          validTokens.push(token);
+        }
+      }
+      if (validTokens.length > 0) {
+        await addNotification(householdId, validTokens, 'Warning', message);
+      }
+    }
     res.status(201).json({message:'Electricity meter usage added.', totalKWh: returnData.totalKWh, totalCost: returnData.totalCost});
   }
   catch(error){
@@ -210,22 +231,34 @@ router.patch('/households/:householdId/limits', authenticate, async(req, res) =>
     const users = await getUsersForHousehold(householdId);
     const tokens = users.map(user => user.fcmToken).filter(Boolean);
 
+    const startWeek = format(weeklyUsageData.startOfWeek, 'MMMM dd');
+    const endWeek = format(weeklyUsageData.endOfWeek, 'MMMM dd');
+    const month = format(monthlyUsageData.monthStart, 'MMMM yyyy');
+
     const notificationsToSend = [];
 
+    const sentNotifications = await getNotificationsForHousehold(householdId);
+    const sentNotificationsText = sentNotifications.map((item)=> {
+      return item.notification;
+    });
+
     if (weeklyUsage >= 0.8 * Number(weeklyLimit) && weeklyUsage < Number(weeklyLimit)) {
-        notificationsToSend.push('You have reached 80% of your household weekly limit!');
+        notificationsToSend.push(`80% of the weekly household limit for period ${startWeek} - ${endWeek} reached!`);
     }
     if (weeklyUsage >= Number(weeklyLimit)) {
-        notificationsToSend.push('You have reached your household weekly limit!');
+        notificationsToSend.push(`Weekly household limit for period ${startWeek} - ${endWeek} reached!`);
     }
     if (monthlyUsage >= 0.8 * Number(monthlyLimit) && monthlyUsage < Number(monthlyLimit)) {
-        notificationsToSend.push('You have reached 80% of your household monthly limit!');
+        notificationsToSend.push(`80% of the monthly household limit for ${month} reached!`);
     }
     if (monthlyUsage >= Number(monthlyLimit)) {
-        notificationsToSend.push('You have reached your household monthly limit!');
+        notificationsToSend.push(`Monthly household limit for ${month} reached!`);
     }
 
     for (const message of notificationsToSend) {
+      if(sentNotificationsText.includes(message)) {
+        continue;
+      }
       const validTokens = [];
 
       for (const token of tokens) {

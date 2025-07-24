@@ -114,7 +114,8 @@ const getMonthlyElectricityCostAndConsumption = async (householdId) => {
             lowTariffConsumption: monthlyConsumptionLowTariff.toFixed(2),
             highTariffConsumption: monthlyConsumptionHighTariff.toFixed(2),
             totalCost: (monthlyCostHighTariff + monthlyCostLowTariff).toFixed(2),
-            totalConsumption: totalConsumption.toFixed(2)
+            totalConsumption: totalConsumption.toFixed(2),
+            monthStart:startOfMonth
         };
     } catch (error) {
         console.error('Error calculating electricity cost!', error);
@@ -126,6 +127,7 @@ const getWeeklyElectricityCostAndConsumption = async (householdId) => {
     try {
         const now = new Date();
         const startOfWeekDate = startOfWeek(now, { weekStartsOn: 1 });
+        const endOfWeekDate = endOfWeek(now, {weekStartsOn:1});
         const weeklyUsages = await db.collection('Electricity Meter Usages')
             .where('householdId', '==', householdId)
             .where('date', '>=', startOfWeekDate)
@@ -197,7 +199,9 @@ const getWeeklyElectricityCostAndConsumption = async (householdId) => {
             lowTariffConsumption: weeklyConsumptionLowTariff.toFixed(2),
             highTariffConsumption: weeklyConsumptionHighTariff.toFixed(2),
             totalCost: (weeklyCostHighTariff + weeklyCostLowTariff).toFixed(2),
-            totalConsumption: (weeklyConsumptionLowTariff + weeklyConsumptionHighTariff).toFixed(2)
+            totalConsumption: (weeklyConsumptionLowTariff + weeklyConsumptionHighTariff).toFixed(2),
+            startOfWeek: startOfWeekDate,
+            endOfWeek: endOfWeekDate
         };
     } catch (error) {
         console.error('Error calculating electricity cost!', error);

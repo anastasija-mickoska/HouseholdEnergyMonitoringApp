@@ -19,31 +19,71 @@ const ApplianceUsageInsight = ({title}) => {
     const [monthlyUsage, setMonthlyUsage] = useState(0);
     const [data, setData] =useState([]);
     const [pieData, setPieData] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const loadData = async () => {
-            const storedUserId = await AsyncStorage.getItem('id');
-            const storedHouseholdId = await AsyncStorage.getItem('householdId');
-            const fetchedToken = await auth.currentUser.getIdToken();
-            setHouseholdId(storedHouseholdId);
-            setToken(fetchedToken);
-            setUserId(storedUserId);
+            try {
+                const storedUserId = await AsyncStorage.getItem('id');
+                const storedHouseholdId = await AsyncStorage.getItem('householdId');
+                const fetchedToken = await auth.currentUser.getIdToken();
+                setHouseholdId(storedHouseholdId);
+                setToken(fetchedToken);
+                setUserId(storedUserId);
 
-            if (storedUserId && fetchedToken && title === 'Your Appliance Usage') {
-                fetchApplianceUsageForUser(storedUserId, fetchedToken);
+                if(storedHouseholdId && fetchedToken) {
+                    await fetchElectricityCostAndConsumption(storedHouseholdId, fetchedToken);
+                }
+                if (storedUserId && fetchedToken && title === 'Your Appliance Usage') {
+                    await fetchApplianceUsageForUser(storedUserId, fetchedToken);
+                }
+                else if(storedHouseholdId && fetchedToken && title === 'Appliance Usage Data') {
+                    await fetchApplianceUsageForHousehold(storedHouseholdId, fetchedToken);
+                }
             }
-            else if(storedHouseholdId && fetchedToken && title === 'Appliance Usage Data') {
-                fetchApplianceUsageForHousehold(storedHouseholdId, fetchedToken);
-            }
-
-            if(storedHouseholdId && fetchedToken) {
-                fetchElectricityCostAndConsumption(storedHouseholdId, fetchedToken);
+            catch(error) {
+                console.error('Error loading data!', error);
+                throw error;
             }
         };
         loadData();
     }, []);
 
-    useEffect(()=> {
+    useEffect(() => {
+        const setChartsData = async () => {
+            try {
+                if (
+                    householdId &&
+                    token &&
+                    totalKWhWeekly !== null &&
+                    totalKWhMonthly !== null &&
+                    weeklyUsage !== null &&
+                    monthlyUsage !== null
+                ) {
+                    await fetchDonutChartData();
+                    await fetchPieChartData();
+                }
+            } catch (error) {
+                console.error('Error setting chart data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        setChartsData();
+    }, [
+        householdId,
+        token,
+        totalKWhWeekly,
+        totalKWhMonthly,
+        weeklyUsage,
+        monthlyUsage,
+        applianceBreakdownWeekly,
+        applianceBreakdownMonthly,
+        activePeriod,
+    ]);
+
+    const fetchDonutChartData = async() => {
         if (householdId && token && totalKWhWeekly !== null && totalKWhMonthly !== null && weeklyUsage !== null && monthlyUsage !== null) {
             const newData = activePeriod === 'weekly'
             ? [
@@ -56,20 +96,22 @@ const ApplianceUsageInsight = ({title}) => {
               ];
             setData(newData);
         }
-    }, [totalKWhWeekly, totalKWhMonthly, weeklyUsage, monthlyUsage, token, householdId, activePeriod]);
+    };
 
-    useEffect(() => {
-        const breakdown = activePeriod === 'weekly' ? applianceBreakdownWeekly : applianceBreakdownMonthly;
-        const colors = ['#4ADEDE', '#1AA7EC', '#1F2F98', '#055B5C', '#7FFFD4', '#289C8E'];
+    const fetchPieChartData = async() => {
+        if(applianceBreakdownMonthly && applianceBreakdownWeekly) {
+            const breakdown = activePeriod === 'weekly' ? applianceBreakdownWeekly : applianceBreakdownMonthly;
+            const colors = ['#4ADEDE', '#1AA7EC', '#1F2F98', '#055B5C', '#7FFFD4', '#289C8E'];
 
-        const pieChartData = Object.entries(breakdown).map(([appliance, data], index) => ({
-            value: Number(data.kWh),
-            color: colors[index % colors.length],
-            text: appliance
-        }));
+            const pieChartData = Object.entries(breakdown).map(([appliance, data], index) => ({
+                value: Number(data.kWh),
+                color: colors[index % colors.length],
+                text: appliance
+            }));
 
-        setPieData(pieChartData);
-    }, [activePeriod, applianceBreakdownWeekly, applianceBreakdownMonthly]);
+            setPieData(pieChartData);
+        }
+    };
 
     const fetchApplianceUsageForHousehold = async(householdId, token) => {
         try {
@@ -190,48 +232,56 @@ const ApplianceUsageInsight = ({title}) => {
         setActivePeriod('monthly');
     }
 
+    if(loading) {
+        return(
+            <View style={styles.container}>
+                <Text style={styles.title}>{title}</Text>
+                <Text style={styles.buttonText}>Loading data...</Text>
+            </View>
+        )
+    }
     const totalCost = activePeriod == 'weekly' ? totalCostWeekly : totalCostMonthly;
-    const applianceBreakdown = activePeriod == 'weekly' ? applianceBreakdownWeekly : applianceBreakdownMonthly;
 
     return(
         <View style={styles.container}>
             <Text style={styles.title}>{title}</Text>
             <View style={styles.charts}>
-                <PieChart donut radius={60} innerRadius={45} data={data} isAnimated={true} centerLabelComponent={() => {
-                    if(weeklyUsage != null && monthlyUsage !=null && totalKWhMonthly!= null && totalKWhWeekly !=null) {
-                        const usage = activePeriod === 'weekly' ? (weeklyUsage ?? 1) : (monthlyUsage ?? 1);
-                        const totalKWh = activePeriod === 'weekly' ? (totalKWhWeekly ?? 0) : (totalKWhMonthly ?? 0);
-                        const percentage = ((totalKWh / usage) * 100) || 0;
-                        return (
-                            <View style={{ alignItems: 'center' }}>
-                                <Text style={styles.consumption}>
-                                    {(totalKWh ?? 0).toFixed(1)} KWh
-                                </Text>
-                                <Text style={styles.percentage}>{percentage.toFixed(0)}% of total {activePeriod} usage</Text>
-                            </View>
-                        );
-                    }
-                    else {
-                        return(
-                            <View style={{ alignItems: 'center' }}>
-                                <Text style={styles.percentage}>No data available</Text>
-                            </View>  
-                        )
-                    }
-                }}/>
+                {console.log('Pie chart data: ', data)}
+                {data.length > 0 && 
+                    <PieChart donut radius={60} innerRadius={45} data={data} isAnimated={true} centerLabelComponent={() => {
+                        if(weeklyUsage != null && monthlyUsage !=null && totalKWhMonthly!= null && totalKWhWeekly !=null) {
+                            const usage = activePeriod === 'weekly' ? (weeklyUsage ?? 1) : (monthlyUsage ?? 1);
+                            const totalKWh = activePeriod === 'weekly' ? (totalKWhWeekly ?? 0) : (totalKWhMonthly ?? 0);
+                            const percentage = ((totalKWh / usage) * 100) || 0;
+                            return (
+                                <View style={{ alignItems: 'center' }}>
+                                    <Text style={styles.consumption}>
+                                        {(totalKWh ?? 0).toFixed(1)} KWh
+                                    </Text>
+                                    <Text style={styles.percentage}>{percentage.toFixed(0)}% of total {activePeriod} usage</Text>
+                                </View>
+                            );
+                        }
+                        else {
+                            return(
+                                <View style={{ alignItems: 'center' }}>
+                                    <Text style={styles.percentage}>No data available</Text>
+                                </View>  
+                            )
+                        }
+                    }}/>
+                }
                 {pieData && pieData.length > 1 && (
                     <PieChart radius={60} data={pieData} isAnimated={true} strokeColor="#F3F3F3" strokeWidth={0.75} focusOnPress/>
                 )}
             </View>
             <View>
-                {pieData && pieData.length > 0 ? pieData.map((item, index) => (
+                {pieData && pieData.length > 0 && pieData.map((item, index) => (
                         <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}>
                             <View style={{ width: 12, height: 12, backgroundColor: item.color, marginRight: 8, borderRadius: 2 }} />
                             <Text style={styles.itemText}>{item.text}: {item.value} KWh</Text>
                         </View>
-                )) : (
-                    <Text style={styles.itemText}>No appliance usage data available.</Text>
-                )}
+                ))}
             </View>
             <Text style={styles.totalCostText}>Total cost: {totalCost} den</Text>
             <View style={styles.buttons}>
