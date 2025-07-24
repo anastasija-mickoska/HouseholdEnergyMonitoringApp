@@ -7,7 +7,6 @@ const sendPushNotification = async (userFcmToken, title, body, data = {}) => {
       notification: {
         title,
         body,
-        icon:"lightbulb"
       },
       android: {
         priority: "high",
