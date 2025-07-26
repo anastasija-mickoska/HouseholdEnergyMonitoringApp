@@ -12,6 +12,7 @@ const CreateHousehold = ({navigation}) => {
     { name: 'householdCode', label: 'Household Code', type: 'text', placeholder: "Enter household code...", required: true },
   ];
   const [userId, setUserId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const getUserId = async () => {
@@ -23,6 +24,7 @@ const CreateHousehold = ({navigation}) => {
 
   const handleCreate = async ({ householdName, address, householdCode }) => {
     try {
+      setIsSubmitting(true);
       const token = await auth.currentUser.getIdToken();
       const householdData = {
         householdName,
@@ -44,7 +46,6 @@ const CreateHousehold = ({navigation}) => {
       const json = await res.json();
 
       if (json.message === 'Household created.' && json.householdId) {
-        Alert.alert(json.message);
         await AsyncStorage.setItem('householdId',json.householdId);
         const result = await fetch(`http://192.168.1.108:8000/users/${userId}`, {
           method: 'PATCH',
@@ -56,9 +57,8 @@ const CreateHousehold = ({navigation}) => {
         });
 
         const jsonResult = await result.json();
-
+        setIsSubmitting(false);
         if (jsonResult.message === 'Household attached to user.') {
-          Alert.alert(jsonResult.message);
           navigation.navigate('Admin Home');
         } else {
           Alert.alert(jsonResult.error || 'Failed to attach household to user.');
@@ -67,6 +67,7 @@ const CreateHousehold = ({navigation}) => {
         Alert.alert(json.error || 'Failed to create household.');
       }
     } catch (error) {
+      setIsSubmitting(false);
       Alert.alert('Creating household failed!', error.message);
     }
   };
@@ -78,9 +79,10 @@ const CreateHousehold = ({navigation}) => {
           title="Create household"
           registerQuestion={false}
           fields={fields}
-          buttonText={"Create"}
+          buttonText={isSubmitting ? "Creating..." : "Create"}
           buttonIcon={"add"} 
           onSubmit={handleCreate}
+          isSubmitting={isSubmitting}
         />
       </View>
     </PageLayout>

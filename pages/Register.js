@@ -5,6 +5,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import {auth, db} from '../firebase';
 import { setDoc, doc } from 'firebase/firestore';
 import messaging from '@react-native-firebase/messaging';
+import { useState } from 'react';
 
 const Register = ({navigation}) => {
   const fields = [
@@ -13,9 +14,14 @@ const Register = ({navigation}) => {
     { name: 'password', label: 'Password', type: 'password', placeholder:'Enter password...', required: true},
     { name: 'role', label:'Role', type: 'text', placeholder:'Enter role - Admin/User...', required: true}
   ];
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const handleRegister = async ({ email, name, password, role }) => {
+    if(role != 'Admin' && role != 'User') {
+        Alert.alert('Invalid role entered.', 'Valid roles: Admin and User');
+    }
     try {
+      setIsSubmitting(true);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
@@ -31,17 +37,24 @@ const Register = ({navigation}) => {
       } catch (error) {
         console.warn('FCM permission/token error:', error);
       }
+      try {
+        await setDoc(doc(db, "users", user.uid), {
+          name: name,
+          email: email,
+          role: role,
+          householdId: null,
+          fcmToken: fcmToken
+        });
+        setIsSubmitting(false);
+        navigation.navigate('Login');
+      }
+      catch(err) {
+        await user.delete();
+        throw new Error('Error registering user!');
+      }
 
-      await setDoc(doc(db, "users", user.uid), {
-        name: name,
-        email: email,
-        role: role,
-        householdId: null,
-        fcmToken: fcmToken
-      });
-
-      navigation.navigate('Login');
     } catch (error) {
+      setIsSubmitting(false);
       Alert.alert("Registration failed", error.message);
       console.error(error.message);
     }
@@ -58,9 +71,10 @@ const Register = ({navigation}) => {
         title="Create an account"
         registerQuestion={false}
         fields={fields}
-        buttonText="Register"
+        buttonText={isSubmitting ? "Registering..." : "Register"}
         buttonIcon={"login"} 
         onSubmit={handleRegister}
+        isSubmitting={isSubmitting}
       />
     </LinearGradient>
   );

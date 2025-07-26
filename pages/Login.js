@@ -6,15 +6,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import messaging from '@react-native-firebase/messaging';
+import { useState } from 'react';
 
 const Login = ({ navigation }) => {
   const fields = [
     { name: 'email', label:'Email', type: 'email', placeholder: "Enter email...", required: true },
     { name: 'password', label: 'Password', type: 'password', placeholder: "Enter password...", required: true },
   ];
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogin = async ({ email, password }) => {
     try {
+      setIsSubmitting(true);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
@@ -51,6 +54,7 @@ const Login = ({ navigation }) => {
         ['id', user.uid],
         ['fcmToken', fcmToken ?? 'null'],
       ]);
+      setIsSubmitting(false);
       if (!householdId) {
         navigation.navigate('Welcome');
       } else {
@@ -61,8 +65,8 @@ const Login = ({ navigation }) => {
         }
       }
     } catch (error) {
+      setIsSubmitting(false);
       Alert.alert("Login failed", error.message);
-      console.error(error.message);
     }
   };
 
@@ -77,9 +81,10 @@ const Login = ({ navigation }) => {
         title="Login"
         registerQuestion={true}
         fields={fields}
-        buttonText="Login"
+        buttonText={isSubmitting ? "Logging in..." : "Login"}
         buttonIcon={"login"} 
         onSubmit={handleLogin}
+        isSubmitting={isSubmitting}
       />
     </LinearGradient>
   );

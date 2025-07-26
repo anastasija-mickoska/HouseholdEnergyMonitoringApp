@@ -10,10 +10,9 @@ const buttonImgMap = {
   login:require('../assets/images/login.png'),
 }
 
-const CustomForm = ({title, registerQuestion, fields, buttonText, buttonIcon, onSubmit}) => {
+const CustomForm = ({title, registerQuestion, fields, buttonText, buttonIcon, onSubmit, isSubmitting}) => {
     const [formData, setFormData] = useState({});
     const [showDatePickers, setShowDatePickers] = useState({});
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const navigation = useNavigation();
 
     const handleChange = (name, value) => {
@@ -43,7 +42,6 @@ const CustomForm = ({title, registerQuestion, fields, buttonText, buttonIcon, on
             return;
           }
         }
-        setIsSubmitting(true);
         onSubmit(formData); 
     };
 
@@ -154,7 +152,7 @@ const CustomForm = ({title, registerQuestion, fields, buttonText, buttonIcon, on
                 </View>
                 ))}
                 <TouchableOpacity style={[styles.button, isSubmitting && styles.disabled]} onPress={handleSubmit} disabled={isSubmitting}>
-                    <Text style={styles.buttonText}>{isSubmitting ? "Submitting..." : buttonText }</Text>
+                    <Text style={styles.buttonText}>{buttonText}</Text>
                     <Image source={buttonImgMap[buttonIcon]}/>
                 </TouchableOpacity>
             </View>

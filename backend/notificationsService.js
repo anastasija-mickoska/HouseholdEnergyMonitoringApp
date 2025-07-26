@@ -1,4 +1,5 @@
 const {db, admin} = require('./config/firebaseConfig');
+const { checkIfTodayEntryExists } = require('./firestoreService');
 
 const sendPushNotification = async (userFcmToken, title, body, data = {}) => {
   try {
@@ -21,8 +22,16 @@ const sendPushNotification = async (userFcmToken, title, body, data = {}) => {
     return true;
 
   } catch (error) {
+    if (
+      error.code === 'messaging/invalid-registration-token' ||
+      error.code === 'messaging/registration-token-not-registered'
+    ) {
+      console.warn(`Invalid token detected and skipped: ${userFcmToken}`);
+      return false;
+    }
+
     console.error("Unexpected error sending notification:", error);
-    return false;
+    throw error; 
   }
 };
 
@@ -67,9 +76,34 @@ const setUserFcmToken = async(userId, token) => {
     }
 };
 
+const checkEntriesAndNotify = async (householdId, tokens, title, body) => {
+  const now = new Date();
+  const day = now.getDay(); 
+  const date = now.getDate(); 
+  const hour = now.getHours();
+
+  const shouldSend = (day === 1 || date === 1) && hour === 18;
+
+  if (shouldSend) {
+    const hasEntry = await checkIfTodayEntryExists(householdId);
+    if (!hasEntry) {
+      try {
+        for (const token of tokens) {
+          await sendPushNotification(token, title, body, {});
+        }
+      } catch (err) {
+        console.error("Unexpected error sending notification:", err);
+        throw err;
+      }
+    }
+  }
+};
+
+
 module.exports = {
     sendPushNotification,
     addNotification,
     getNotificationsForHousehold,
     setUserFcmToken,
+    checkEntriesAndNotify
 };

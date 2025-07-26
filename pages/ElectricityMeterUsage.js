@@ -18,6 +18,7 @@ const ElectricityMeterUsage = ({navigation}) => {
   const [totalKWh, setTotalKwh] = useState(null);
   const [totalCost, setTotalCost] = useState(null);
   const [modalVisibleElectricityMeter, setModalVisibleElectricityMeter] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
       const loadData = async () => {
@@ -33,6 +34,7 @@ const ElectricityMeterUsage = ({navigation}) => {
 
     const handleSubmit = async ({highTariff, lowTariff, electricityMeterSubmitDate}) => {
         try {
+          setIsSubmitting(true);
           const token = await auth.currentUser.getIdToken();
           const usageData = {
             userId:userId,
@@ -59,6 +61,7 @@ const ElectricityMeterUsage = ({navigation}) => {
             setTotalKwh(json.totalKWh);
             setTotalCost(json.totalCost);
             setModalVisibleElectricityMeter(true);
+            setIsSubmitting(false);
             setTimeout(() => {
                 setModalVisibleElectricityMeter(false);
                 if(role === 'Admin') {
@@ -67,13 +70,14 @@ const ElectricityMeterUsage = ({navigation}) => {
                 else if(role === 'User') {
                     navigation.navigate('User Home');
                 }
-            }, 5000);
+            }, 3000);
           }
           else {
             Alert.alert(json.error || 'Unknown error');
           }
         }
         catch(error) {
+          setIsSubmitting(false);
           Alert.alert('Error submitting data!', error.message);
         }
     }
@@ -88,6 +92,7 @@ const ElectricityMeterUsage = ({navigation}) => {
           buttonText={"Submit"}
           buttonIcon={"check"} 
           onSubmit = {handleSubmit}
+          isSubmitting={isSubmitting}
         />
         <Modal transparent={true} visible={modalVisibleElectricityMeter} animationType="fade">
           <View style={styles.modal}>

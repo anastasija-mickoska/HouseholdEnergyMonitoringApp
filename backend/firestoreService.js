@@ -324,6 +324,28 @@ const getMonthlyApplianceUsageByUser = async(userId) => {
     }
 };
 
+const checkIfTodayEntryExists = async(householdId) => {
+    try {
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const snapshot = await db
+        .collection('Electricity Meter Usages')
+        .where('householdId', '==', householdId)
+        .where('date', '>=', Timestamp.fromDate(startOfDay))
+        .where('date', '<=', Timestamp.fromDate(endOfDay))
+        .get();
+
+        return !snapshot.empty;
+    }
+    catch(error) {
+        console.error('Error checking entries!', error);
+        throw error;
+    }
+}
+
 module.exports = {
     checkIfHouseholdExists,
     getHouseholdById,
@@ -341,4 +363,5 @@ module.exports = {
     setUserHousehold,
     getWeeklyApplianceUsageByUser,
     getMonthlyApplianceUsageByUser,
+    checkIfTodayEntryExists
 };

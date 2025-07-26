@@ -28,6 +28,7 @@ const {sendPushNotification,
   addNotification, 
   getNotificationsForHousehold, 
   setUserFcmToken,
+  checkEntriesAndNotify
   } = require('./notificationsService');
 const authenticate = require('./config/auth');
 const { Timestamp } = require('firebase-admin/firestore');
@@ -369,6 +370,21 @@ router.get('/previousMonthsUsages/:householdId', authenticate, async(req,res) =>
     }
     catch (error) {
         console.error('Error getting previous weeks usages for household :', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/notifications/:householdId', authenticate, async(req,res) => {
+    try {
+        const householdId = req.params.householdId;
+        const users = await getUsersForHousehold(householdId);
+        const tokens = users.map(user => user.fcmToken).filter(Boolean);
+
+        await checkEntriesAndNotify(householdId, tokens, "Reminder", "Don't forget to log electricity meter data today!")
+        res.status(200).json({message:'Notifications sent successfully.'});
+    }
+    catch (error) {
+        console.error('Error sending notification :', error);
         res.status(500).json({ error: error.message });
     }
 });

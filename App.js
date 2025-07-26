@@ -22,6 +22,7 @@ import { View, StatusBar, Alert } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import notifee, { AndroidImportance } from '@notifee/react-native';
+import BackgroundFetch from 'react-native-background-fetch';
 
 const Stack = createNativeStackNavigator();
 
@@ -44,15 +45,19 @@ const sendTokenToBackend = async (userId, fcmToken, token) => {
 
 const App = () => {
   const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [householdId, setHouseholdId] = useState(null);
+  const [token, setToken] = useState(null);
 
   useEffect(() => {
-    async function loadFonts() {
+    async function loadData() {
       await Font.loadAsync({
         'Roboto Flex': require('./assets/RobotoFlex.ttf'),
       });
       setFontsLoaded(true);
+      const storedHouseholdId = await AsyncStorage.getItem('householdId');
+      setHouseholdId(storedHouseholdId);
     }
-    loadFonts();
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -75,6 +80,7 @@ const App = () => {
       try {
         const userId = await AsyncStorage.getItem('id');
         const fetchedToken = await AsyncStorage.getItem('token');
+        setToken(fetchedToken);
         if (!userId || !fetchedToken) {
           return;
         }
@@ -130,6 +136,37 @@ const App = () => {
     return () => {
       unsubscribeOnMessage();
     };
+  }, []);
+
+  useEffect(() => {
+    const initBackgroundFetch = async () => {
+      BackgroundFetch.configure(
+        {
+          minimumFetchInterval: 480,
+          stopOnTerminate: false,
+          startOnBoot: true,
+          enableHeadless: true,
+        },
+        async (taskId) => {
+          console.log('BackgroundFetch task: ', taskId);
+          const res = await fetch(`http://192.168.1.108:8000/notifications/${householdId}`, {
+            method: 'POST', 
+            headers: {
+              'Authorization' : `Bearer ${token}`,
+              'Content-Type' : 'application/json'
+            }
+          });
+          BackgroundFetch.finish(taskId);
+        },
+        (error) => {
+          console.log('BackgroundFetch failed to start', error);
+        }
+      );
+
+      BackgroundFetch.start();
+    };
+
+    initBackgroundFetch();
   }, []);
 
 

@@ -12,8 +12,6 @@ const ElectricityMeterInsight = () => {
     const [monthlyUsage, setMonthlyUsage] = useState(0);
     const [weeklyCost, setWeeklyCost] = useState(0);
     const [monthlyCost, setMonthlyCost] = useState(0);    
-    const [householdId, setHouseholdId] = useState(null);
-    const [token, setToken] = useState(null);
     const [lowTariffWeekly, setLowTariffWeekly] = useState(0);
     const [lowTariffMonthly, setLowTariffMonthly] = useState(0);
     const [highTariffWeekly, setHighTariffWeekly] = useState(0);
@@ -21,54 +19,32 @@ const ElectricityMeterInsight = () => {
     const [data, setData] = useState([]);
     const [chartDataWeekly, setChartDataWeekly] = useState([]);
     const [chartDataMonthly, setChartDataMonthly] = useState([]);
-    const [value2Weekly,setValue2Weekly] = useState(0);
-    const [value2Monthly,setValue2Monthly] = useState(0);
     const [loading, setLoading] = useState(true);
 
     useEffect(()=> {
         const loadData = async() => {
-            const storedUserId = await AsyncStorage.getItem('id');
-            const storedHouseholdId = await AsyncStorage.getItem('householdId');
-            const fetchedToken = await auth.currentUser.getIdToken();
-            setHouseholdId(storedHouseholdId);
-            setToken(fetchedToken);
-            setUserId(storedUserId);
+            try {
+                setLoading(true);
+                console.log('Loading before: ', loading);
+                const storedHouseholdId = await AsyncStorage.getItem('householdId');
+                const fetchedToken = await auth.currentUser.getIdToken();
+                await fetchUsageLimits(storedHouseholdId, fetchedToken);
+                await fetchElectricityCostAndConsumption(storedHouseholdId, fetchedToken);
+                await fetchPreviousConsumption(storedHouseholdId, fetchedToken);
+                await fetchActivePeriodData();
+                console.log('Loading after fucntions:', loading);
+            }
+            catch (error) {
+                console.error('Error fetching data!', error);
+            } finally {
+                setLoading(false); 
+                console.log('Loading in finally block:', loading);
+            }
         }
         loadData();
-    }, []);
+    }, [weeklyUsage, monthlyUsage, weeklyLimit, monthlyLimit,activePeriod]);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                if (!householdId || !token) return;
-                await fetchUsageLimits();
-                await fetchElectricityCostAndConsumption();
-                await fetchPreviousConsumption();
-            } catch (error) {
-                console.error('Error fetching data!', error);
-            }
-        };
-        fetchData();
-    }, [householdId, token, activePeriod]);
-
-    useEffect(() => {
-        const fetchDonutChartData = async() => {
-            try {
-                if (weeklyUsage != null && weeklyLimit != null && monthlyUsage != null && monthlyLimit != null) {
-                    fetchActivePeriodData();
-                }
-            }
-            catch(error) {
-                console.error('Error setting data!', error);
-            }
-            finally {
-                setLoading(false);
-            }
-        }
-        fetchDonutChartData();
-    }, [weeklyUsage, weeklyLimit, monthlyUsage, monthlyLimit, activePeriod]);
-
-    const fetchUsageLimits = async() => {
+    const fetchUsageLimits = async(householdId, token) => {
         try {
             const res = await fetch(`http://192.168.1.108:8000/households/${householdId}`, {
                 method:'GET',
@@ -89,7 +65,7 @@ const ElectricityMeterInsight = () => {
         }
     };
 
-    const fetchElectricityCostAndConsumption = async() => {
+    const fetchElectricityCostAndConsumption = async(householdId, token) => {
         try {
             const res = await fetch(`http://192.168.1.108:8000/weeklyElectricityUsage/${householdId}`, {
                 method:'GET',
@@ -129,7 +105,7 @@ const ElectricityMeterInsight = () => {
         }
     };
 
-    const fetchPreviousConsumption = async() => {
+    const fetchPreviousConsumption = async(householdId, token) => {
         try {
             const res = await fetch(`http://192.168.1.108:8000/previousWeeksUsages/${householdId}`, {
                 method: 'GET',
@@ -179,12 +155,6 @@ const ElectricityMeterInsight = () => {
 
         let remaining = Math.max(0, limit - usage);
 
-        if (activePeriod === 'weekly') {
-            setValue2Weekly(remaining);
-        } else {
-            setValue2Monthly(remaining);
-        }
-
         const newData = [
             { value: usage, color: '#4ADEDE' },
             { value: remaining, color: '#E0E0E0' }
@@ -203,15 +173,10 @@ const ElectricityMeterInsight = () => {
     const highTariff = activePeriod === 'weekly' ? highTariffWeekly : highTariffMonthly;
     const totalCost = activePeriod === 'weekly' ? weeklyCost : monthlyCost;
     const barChartData = activePeriod === 'weekly' ? chartDataWeekly : chartDataMonthly;
+    const allValuesZeroBarChart = barChartData.every((item) => item.value === 0);
+    const allValuesZeroDonutChart = data.every((item) => item.value === 0);
 
-    const isDataReady =
-    (activePeriod === 'weekly'
-        ? weeklyUsage && weeklyLimit
-        : monthlyUsage && monthlyLimit) &&
-    data.length > 0 &&
-    barChartData.length > 0;
-
-    if(loading || !isDataReady) {
+    if(loading) {
         return(
             <View style={styles.container}>
                 <Text style={styles.title}>Electricity Meter Data</Text>
@@ -224,41 +189,44 @@ const ElectricityMeterInsight = () => {
         <View style={styles.container}>
             <Text style={styles.title}>Electricity Meter Data</Text>
             <View style={styles.charts}>
-                {console.log("Donut chart data:", data)}
-                <PieChart donut radius={60} innerRadius={45} data={data} isAnimated={true} centerLabelComponent={() => {
-                    if(weeklyUsage != null && monthlyUsage !=null && weeklyLimit!= null && monthlyLimit !=null) {
-                        const usage = activePeriod === 'weekly' ? (weeklyUsage ?? 0) : (monthlyUsage ?? 0);
-                        const limit = activePeriod === 'weekly' ? (weeklyLimit ?? 1) : (monthlyLimit ?? 1);
-                        const percentage = ((usage / limit) * 100) || 0;
-                        return (
-                            <View style={{ alignItems: 'center' }}>
-                                <Text style={styles.consumption}>
-                                    {usage.toLocaleString()} KWh
-                                </Text>
-                                <Text style={styles.percentage}>{percentage.toFixed(0)}% of limit</Text>
-                            </View>
-                        );
-                    }
-                    else {
-                        return(
-                            <View style={{ alignItems: 'center' }}>
-                                <Text style={styles.percentage}>No data available</Text>
-                            </View>  
-                        )
-                    }
-                }}/>
-                {barChartData.length > 0 && 
-                    <BarChart data={barChartData}
-                    barWidth={8} 
-                    barBorderRadius={8}
-                    height={100}
-                    width={100}
-                    spacing={12}
-                    yAxisColor="transparent"
-                    xAxisColor={'#1F2F98'}
-                    xAxisLabelTextStyle={{ color: '#1F2F98', fontSize: 6, }}
-                    yAxisTextStyle={{ color: '#1F2F98', fontSize: 6 }}
-                    isAnimated animationDuration={800}/>
+                {!allValuesZeroDonutChart && !allValuesZeroBarChart && !loading && 
+                    <>
+                        <PieChart donut radius={60} innerRadius={45} data={data} isAnimated={true} centerLabelComponent={() => {
+                            if ((activePeriod === 'weekly' && weeklyUsage > 0 && weeklyLimit > 0) ||(activePeriod === 'monthly' && monthlyUsage > 0 && monthlyLimit > 0)) {
+                                const usage = activePeriod === 'weekly' ? weeklyUsage : monthlyUsage;
+                                const limit = activePeriod === 'weekly' ? weeklyLimit : monthlyLimit;
+                                const percentage = limit > 0 ? (usage / limit) * 100 : 0;
+                                return (
+                                    <View style={{ alignItems: 'center' }}>
+                                        <Text style={styles.consumption}>
+                                            {usage.toLocaleString()} KWh
+                                        </Text>
+                                        <Text style={styles.percentage}>{percentage.toFixed(0)}% of limit</Text>
+                                    </View>
+                                );
+                            }
+                            else {
+                                return(
+                                    <View style={{ alignItems: 'center' }}>
+                                        <Text style={styles.percentage}>No data available</Text>
+                                    </View>  
+                                )
+                            }
+                        }}/>
+                        <BarChart
+                            data={barChartData}
+                            barWidth={8} 
+                            barBorderRadius={8}
+                            height={100}
+                            spacing={15}
+                            yAxisColor="transparent"
+                            xAxisColor={'#1F2F98'}
+                            xAxisLabelTextStyle={{ color: '#1F2F98', fontSize: 6 }}
+                            yAxisTextStyle={{ color: '#1F2F98', fontSize: 6 }}
+                            isAnimated
+                            animationDuration={800}
+                        />
+                    </>
                 }
             </View>
             <View style={styles.text}>
@@ -301,9 +269,11 @@ const styles = StyleSheet.create({
     },
     charts: {
         width:'100%',
+        padding:10,
         flexDirection:'row',
         justifyContent:'space-evenly',
         alignItems:'center',
+        gap:10
     },
     text: {
         backgroundColor: '#4ADEDE',

@@ -14,6 +14,7 @@ const ApplianceEnergyUsage = ({ navigation }) => {
     const [totalKWh, setTotalKwh] = useState(null);
     const [totalCost, setTotalCost] = useState(null);
     const [modalVisibleAppliance, setModalVisibleAppliance] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         const loadData = async () => {
@@ -43,6 +44,7 @@ const ApplianceEnergyUsage = ({ navigation }) => {
 
     const handleSubmit = async ({ appliance, timeDuration, date, startingTime }) => {
         try {
+            setIsSubmitting(true);
             const [hours, minutes] = startingTime.split(':').map(Number);
             const startingDateTime = new Date(date);
             startingDateTime.setHours(hours);
@@ -74,6 +76,7 @@ const ApplianceEnergyUsage = ({ navigation }) => {
                 setTotalKwh(json.totalKWh);
                 setTotalCost(json.totalCost);
                 setModalVisibleAppliance(true);
+                setIsSubmitting(false);
                 setTimeout(() => {
                     setModalVisibleAppliance(false);
                     if(role === 'Admin') {
@@ -87,6 +90,7 @@ const ApplianceEnergyUsage = ({ navigation }) => {
                 Alert.alert(json.error || 'Unknown error');
             }
         } catch (error) {
+            setIsSubmitting(false);
             Alert.alert('Error submitting data!', error.message);
         }
     };
@@ -106,6 +110,7 @@ const ApplianceEnergyUsage = ({ navigation }) => {
                     buttonText={"Submit"}
                     buttonIcon={"check"}
                     onSubmit={handleSubmit}
+                    isSubmitting={isSubmitting}
                 />
             </View>
             <Modal transparent={true} visible={modalVisibleAppliance} animationType="fade">
@@ -137,9 +142,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'rgba(0,0,0,0.5)',
-        padding:20,
-        marginTop:22
-    },
+        padding:20
+        },
     modalText: {
         backgroundColor:'#4ADEDE',
         color: '#F3F3F3',

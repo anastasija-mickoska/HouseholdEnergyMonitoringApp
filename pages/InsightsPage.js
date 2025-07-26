@@ -39,7 +39,7 @@ const styles=StyleSheet.create({
     container: {
         flexGrow:1,
         flexDirection:'column',
-        justifyContent:'space-around',
+        justifyContent:'flex-start',
         alignItems:'flex-start',
         gap:20,
         padding:20,

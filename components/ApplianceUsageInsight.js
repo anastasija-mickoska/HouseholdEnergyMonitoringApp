@@ -6,9 +6,6 @@ import { PieChart } from "react-native-gifted-charts";
 
 const ApplianceUsageInsight = ({title}) => {
     const [activePeriod, setActivePeriod] = useState('weekly');
-    const [userId, setUserId] = useState(null);
-    const [token, setToken] = useState(null);
-    const [householdId, setHouseholdId] = useState(null);
     const [applianceBreakdownWeekly, setApplianceBreakdownWeekly] = useState({});
     const [applianceBreakdownMonthly, setApplianceBreakdownMonthly] = useState({});  
     const [totalKWhWeekly, setTotalKWhWeekly] = useState(0);
@@ -23,94 +20,55 @@ const ApplianceUsageInsight = ({title}) => {
 
     useEffect(() => {
         const loadData = async () => {
+            setLoading(true);
             try {
-                const storedUserId = await AsyncStorage.getItem('id');
-                const storedHouseholdId = await AsyncStorage.getItem('householdId');
-                const fetchedToken = await auth.currentUser.getIdToken();
-                setHouseholdId(storedHouseholdId);
-                setToken(fetchedToken);
-                setUserId(storedUserId);
+            const storedHouseholdId = await AsyncStorage.getItem('householdId');
+            const fetchedToken = await auth.currentUser.getIdToken();
+            const storedUserId = await AsyncStorage.getItem('id');
 
-                if(storedHouseholdId && fetchedToken) {
-                    await fetchElectricityCostAndConsumption(storedHouseholdId, fetchedToken);
-                }
-                if (storedUserId && fetchedToken && title === 'Your Appliance Usage') {
-                    await fetchApplianceUsageForUser(storedUserId, fetchedToken);
-                }
-                else if(storedHouseholdId && fetchedToken && title === 'Appliance Usage Data') {
-                    await fetchApplianceUsageForHousehold(storedHouseholdId, fetchedToken);
-                }
+            if (storedHouseholdId && fetchedToken) {
+                await fetchElectricityCostAndConsumption(storedHouseholdId, fetchedToken);
             }
-            catch(error) {
-                console.error('Error loading data!', error);
-                throw error;
+            if (storedUserId && fetchedToken && title === 'Your Appliance Usage') {
+                await fetchApplianceUsageForUser(storedUserId, fetchedToken);
+            } else if (storedHouseholdId && fetchedToken && title === 'Appliance Usage Data') {
+                await fetchApplianceUsageForHousehold(storedHouseholdId, fetchedToken);
+            }
+            await fetchDonutChartData();
+            await fetchPieChartData();
+            } catch (error) {
+            console.error('Error during initialization:', error);
+            } finally {
+            setLoading(false);
             }
         };
         loadData();
-    }, []);
-
-    useEffect(() => {
-        const setChartsData = async () => {
-            try {
-                if (
-                    householdId &&
-                    token &&
-                    totalKWhWeekly !== null &&
-                    totalKWhMonthly !== null &&
-                    weeklyUsage !== null &&
-                    monthlyUsage !== null
-                ) {
-                    await fetchDonutChartData();
-                    await fetchPieChartData();
-                }
-            } catch (error) {
-                console.error('Error setting chart data:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        setChartsData();
-    }, [
-        householdId,
-        token,
-        totalKWhWeekly,
-        totalKWhMonthly,
-        weeklyUsage,
-        monthlyUsage,
-        applianceBreakdownWeekly,
-        applianceBreakdownMonthly,
-        activePeriod,
-    ]);
+    }, [activePeriod, totalKWhMonthly, totalKWhWeekly,weeklyUsage, monthlyUsage]);
 
     const fetchDonutChartData = async() => {
-        if (householdId && token && totalKWhWeekly !== null && totalKWhMonthly !== null && weeklyUsage !== null && monthlyUsage !== null) {
-            const newData = activePeriod === 'weekly'
-            ? [
-                { value: totalKWhWeekly, color: '#4ADEDE' },
-                { value: weeklyUsage - totalKWhWeekly, color: '#E0E0E0' },
-              ]
-            : [
-                { value: totalKWhMonthly, color: '#4ADEDE' },
-                { value: monthlyUsage - totalKWhMonthly, color: '#E0E0E0' },
-              ];
-            setData(newData);
-        }
+        const newData = activePeriod === 'weekly'
+        ? [
+            { value: totalKWhWeekly, color: '#4ADEDE' },
+            { value: weeklyUsage - totalKWhWeekly, color: '#E0E0E0' },
+            ]
+        : [
+            { value: totalKWhMonthly, color: '#4ADEDE' },
+            { value: monthlyUsage - totalKWhMonthly, color: '#E0E0E0' },
+            ];
+        setData(newData);
     };
 
     const fetchPieChartData = async() => {
-        if(applianceBreakdownMonthly && applianceBreakdownWeekly) {
-            const breakdown = activePeriod === 'weekly' ? applianceBreakdownWeekly : applianceBreakdownMonthly;
-            const colors = ['#4ADEDE', '#1AA7EC', '#1F2F98', '#055B5C', '#7FFFD4', '#289C8E'];
+        const breakdown = activePeriod === 'weekly' ? applianceBreakdownWeekly : applianceBreakdownMonthly;
+        const colors = ['#4ADEDE', '#1AA7EC', '#1F2F98', '#055B5C', '#7FFFD4', '#289C8E'];
 
-            const pieChartData = Object.entries(breakdown).map(([appliance, data], index) => ({
-                value: Number(data.kWh),
-                color: colors[index % colors.length],
-                text: appliance
-            }));
+        const pieChartData = Object.entries(breakdown).map(([appliance, data], index) => ({
+            value: Number(data.kWh),
+            color: colors[index % colors.length],
+            text: appliance
+        }));
 
-            setPieData(pieChartData);
-        }
+        setPieData(pieChartData);
     };
 
     const fetchApplianceUsageForHousehold = async(householdId, token) => {
@@ -246,7 +204,6 @@ const ApplianceUsageInsight = ({title}) => {
         <View style={styles.container}>
             <Text style={styles.title}>{title}</Text>
             <View style={styles.charts}>
-                {console.log('Pie chart data: ', data)}
                 {data.length > 0 && 
                     <PieChart donut radius={60} innerRadius={45} data={data} isAnimated={true} centerLabelComponent={() => {
                         if(weeklyUsage != null && monthlyUsage !=null && totalKWhMonthly!= null && totalKWhWeekly !=null) {

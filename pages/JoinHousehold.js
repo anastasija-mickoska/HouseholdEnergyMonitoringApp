@@ -11,6 +11,7 @@ const JoinHousehold = ({navigation}) => {
     { name: 'householdCode', label: 'Household Code', type: 'text', placeholder: "Enter household code...", required: true },
   ];
   const [userId, setUserId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const getUserId = async () => {
@@ -22,6 +23,7 @@ const JoinHousehold = ({navigation}) => {
 
   const handleJoin = async ({ householdName, householdCode }) => {
       try {
+        setIsSubmitting(true);
         const token = await auth.currentUser.getIdToken();
         const householdData = {
           userId,
@@ -41,11 +43,12 @@ const JoinHousehold = ({navigation}) => {
           return;
         }
         const json = await res.json();
-        Alert.alert(json.message);
         await AsyncStorage.setItem('householdId',json.householdId);
+        setIsSubmitting(false);
         navigation.navigate('User Home');
       }
       catch(error){
+        setIsSubmitting(false);
         console.error(error.message);
         Alert.alert('Joining household failed!', error.message);
       }
@@ -57,9 +60,10 @@ const JoinHousehold = ({navigation}) => {
           title="Join household"
           registerQuestion={false}
           fields={fields}
-          buttonText={"Join"}
+          buttonText={isSubmitting ? "Joining..." : "Join"}
           buttonIcon={"add"} 
           onSubmit={handleJoin}
+          isSubmitting={isSubmitting}
         />
       </View>
     </PageLayout>
