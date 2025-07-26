@@ -69,4 +69,7 @@ project(':react-native-svg').projectDir = new File(rootProject.projectDir, '../n
 
 include ':react-native-edge-to-edge'
 project(':react-native-edge-to-edge').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-edge-to-edge/android')
+
+include ':react-native-background-fetch'
+project(':react-native-background-fetch').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-background-fetch/android')
 includeBuild(expoAutolinking.reactNativeGradlePlugin)

@@ -161,6 +161,7 @@ dependencies {
     implementation project(':react-native-screens')
     implementation project(':react-native-svg')
     implementation project(':react-native-edge-to-edge')
+    implementation project(':react-native-background-fetch')
 
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
     def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";
