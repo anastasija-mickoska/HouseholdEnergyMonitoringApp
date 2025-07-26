@@ -4,7 +4,6 @@ buildscript {
   repositories {
     google()
     mavenCentral()
-    maven { url "https://www.jitpack.io" }  
   }
   dependencies {
     classpath 'com.google.gms:google-services:4.4.1'
@@ -28,10 +27,11 @@ allprojects {
       // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
       url(reactNativeAndroidDir)
     }
-
+    maven {
+        url("${project(':react-native-background-fetch').projectDir}/libs")
+    }
     google()
     mavenCentral()
-    maven { url 'https://www.jitpack.io' }
   }
 }
 
