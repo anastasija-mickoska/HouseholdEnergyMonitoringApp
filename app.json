@@ -16,7 +16,7 @@
       }
     },
     "splash": {
-      "image":  "./assets/images/logo.png",
+      "image": "./assets/images/logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -26,15 +26,20 @@
     "android": {
       "usesCleartextTraffic": true,
       "adaptiveIcon": {
-        "foregroundImage":  "./assets/images/logo.png",
+        "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#f3f3f3"
       },
       "edgeToEdgeEnabled": true,
-      "permissions": ["NOTIFICATIONS"]
+      "permissions": [
+        "NOTIFICATIONS"
+      ]
     },
     "web": {
       "favicon": "./assets/images/logo.png"
     },
-    "scheme": "householdenergy"
+    "scheme": "householdenergy",
+    "plugins": [
+      "react-native-background-fetch"
+    ]
   }
 }
