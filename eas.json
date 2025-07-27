@@ -4,11 +4,11 @@
       "developmentClient": true,
       "distribution": "internal"
     },
+    "hooks": {
+      "prebuild": "node scripts/create-google-services.js"
+    },
     "production": {
-      "distribution": "store",
-      "hooks": {
-        "prebuild": "node scripts/create-google-services.js"
-      }
+        "distribution": "store"
     }
   }
 }
