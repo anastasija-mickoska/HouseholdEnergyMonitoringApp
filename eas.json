@@ -1,7 +1,4 @@
 {
-  "cli": {
-    "version": ">= 3.0.0"
-  },
   "build": {
     "development": {
       "developmentClient": true,
@@ -9,11 +6,6 @@
     },
     "production": {
       "distribution": "store"
-    }
-  },
-  "hooks": {
-    "prebuild": {
-      "command": "node scripts/create-google-services.js"
     }
   }
 }
