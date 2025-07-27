@@ -1,14 +1,13 @@
 const fs = require('fs');
 const path = require('path');
 
-const googleServices = process.env.GOOGLE_SERVICES_JSON;
+const source = path.join(__dirname, '..', 'secrets', 'google-services.json');
+const dest = path.join(__dirname, '..', 'android', 'app', 'google-services.json');
 
-if (!googleServices) {
-  console.error("Missing GOOGLE_SERVICES_JSON environment variable");
+if (!fs.existsSync(source)) {
+  console.error('google-services.json not found in secrets folder.');
   process.exit(1);
 }
 
-const filePath = path.join(__dirname, '..', 'android', 'app', 'google-services.json');
-
-fs.writeFileSync(filePath, googleServices);
-console.log('google-services.json written to android/app/');
+fs.copyFileSync(source, dest);
+console.log('Copied google-services.json to android/app folder');
