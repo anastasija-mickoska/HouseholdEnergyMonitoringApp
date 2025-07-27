@@ -5,7 +5,10 @@
       "distribution": "internal"
     },
     "production": {
-      "distribution": "store"
+      "distribution": "store",
+      "hooks": {
+        "prebuild": "node scripts/create-google-services.js"
+      }
     }
   }
 }
