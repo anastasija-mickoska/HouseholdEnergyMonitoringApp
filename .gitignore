@@ -37,5 +37,3 @@ yarn-error.*
 *.tsbuildinfo
 
 **/householdenergymonitoringapp-firebase-adminsdk-fbsvc-b7ab9cb89b.json
-**/google-services.json
-**/secrets/
