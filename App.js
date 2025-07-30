@@ -142,17 +142,20 @@ const App = () => {
     };
   }, []);
 
-  useEffect(() => {
+ useEffect(() => {
     const initBackgroundFetch = async () => {
-      BackgroundFetch.configure(
-        {
-          minimumFetchInterval: 60,
-          stopOnTerminate: false,
-          startOnBoot: true,
-          enableHeadless: true,
-        },
-        async (taskId) => {
+      try {
+        await BackgroundFetch.configure(
+          {
+            minimumFetchInterval: 60,
+            stopOnTerminate: false,
+            startOnBoot: true,
+            enableHeadless: true,
+          },
+          async (taskId) => {
             try {
+              const householdId = await AsyncStorage.getItem('householdId');
+              const token = await AsyncStorage.getItem('token');
               const res = await fetch(`http://192.168.1.108:8000/notifications/${householdId}`, {
                 method: 'POST',
                 headers: {
@@ -164,77 +167,75 @@ const App = () => {
                 console.warn('Notification fetch failed with status', res.status);
               }
             } catch (error) {
-              console.warn('Notification fetch failed', error.message);
+              console.warn('Notification fetch error:', error.message);
             } finally {
               BackgroundFetch.finish(taskId);
             }
-        },
-        (error) => {
-          console.log('BackgroundFetch failed to start', error);
-        }
-      );
+          },
+          (error) => {
+            console.log('BackgroundFetch failed to configure', error);
+          }
+        );
 
-      BackgroundFetch.start();
+        await BackgroundFetch.start();
+        console.log('BackgroundFetch started');
+      } catch (err) {
+        console.warn('BackgroundFetch error:', err);
+      }
     };
 
     initBackgroundFetch();
   }, []);
 
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', async (nextAppState) => {
+    const handleAppStateChange = async (nextAppState) => {
       if (
-        appState.current.match(/active/) &&
-        nextAppState.match(/inactive|background/)
+        appState.current === 'active' &&
+        (nextAppState === 'background' || nextAppState === 'inactive')
       ) {
         const timestamp = Date.now().toString();
-        await AsyncStorage.setItem('lastActiveTime', timestamp);
-        console.log('Saved timestamp:', timestamp);
+        try {
+          await AsyncStorage.setItem('lastActiveTime', timestamp);
+          console.log('Saved timestamp:', timestamp);
+        } catch (err) {
+          console.warn('Failed to save timestamp', err);
+        }
+      }
+      if (nextAppState === 'active') {
+        const lastActiveStr = await AsyncStorage.getItem('lastActiveTime');
+        if (lastActiveStr) {
+          const lastActiveTime = parseInt(lastActiveStr, 10);
+          const now = Date.now();
+          const diffMinutes = (now - lastActiveTime) / 1000 / 60;
+          console.log('Inactive time:', diffMinutes.toFixed(2), 'minutes');
+
+          if (diffMinutes >= 15) {
+            try {
+              await signOut(auth);
+              await AsyncStorage.clear();
+              if (navigationRef.isReady()) {
+                navigationRef.reset({
+                  index: 0,
+                  routes: [{ name: 'Login' }],
+                });
+                console.log('Auto-logged out after inactivity');
+              }
+            } catch (error) {
+              console.error('Auto logout error:', error);
+            }
+          }
+        }
       }
 
       appState.current = nextAppState;
-    });
+    };
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
 
     return () => {
       subscription.remove();
     };
   }, []);
 
-  useEffect(() => {
-    const checkAutoLogout = async () => {
-      const lastActiveStr = await AsyncStorage.getItem('lastActiveTime');
-      if (!lastActiveStr) return;
-
-      const lastActiveTime = parseInt(lastActiveStr, 10);
-      const now = Date.now();
-      const diffMinutes = (now - lastActiveTime) / 1000 / 60;
-      if (diffMinutes >= AUTO_LOGOUT_MINUTES) {
-        try {
-          await signOut(auth);                
-          await AsyncStorage.clear();       
-
-          if (navigationRef.isReady()) {
-            navigationRef.reset({
-              index: 0,
-              routes: [{ name: 'Login' }],
-            });
-            console.log('Auto-logged out after background timeout');
-          }
-        } catch (error) {
-          console.error('Auto logout error:', error);
-        }
-      }
-    };
-
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') {
-        checkAutoLogout();
-      }
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, []);
 
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {

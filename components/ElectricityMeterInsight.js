@@ -25,20 +25,17 @@ const ElectricityMeterInsight = () => {
         const loadData = async() => {
             try {
                 setLoading(true);
-                console.log('Loading before: ', loading);
                 const storedHouseholdId = await AsyncStorage.getItem('householdId');
                 const fetchedToken = await auth.currentUser.getIdToken();
                 await fetchUsageLimits(storedHouseholdId, fetchedToken);
                 await fetchElectricityCostAndConsumption(storedHouseholdId, fetchedToken);
                 await fetchPreviousConsumption(storedHouseholdId, fetchedToken);
                 await fetchActivePeriodData();
-                console.log('Loading after fucntions:', loading);
             }
             catch (error) {
                 console.error('Error fetching data!', error);
             } finally {
                 setLoading(false); 
-                console.log('Loading in finally block:', loading);
             }
         }
         loadData();
