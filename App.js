@@ -147,7 +147,7 @@ const App = () => {
       try {
         await BackgroundFetch.configure(
           {
-            minimumFetchInterval: 60,
+            minimumFetchInterval: 45,
             stopOnTerminate: false,
             startOnBoot: true,
             enableHeadless: true,
@@ -211,6 +211,7 @@ const App = () => {
 
           if (diffMinutes >= 15) {
             try {
+              console.log('Auto-logged out after inactivity');
               await signOut(auth);
               await AsyncStorage.clear();
               if (navigationRef.isReady()) {
@@ -218,7 +219,6 @@ const App = () => {
                   index: 0,
                   routes: [{ name: 'Login' }],
                 });
-                console.log('Auto-logged out after inactivity');
               }
             } catch (error) {
               console.error('Auto logout error:', error);
