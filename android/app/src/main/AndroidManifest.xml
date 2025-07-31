@@ -20,14 +20,6 @@
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_LAUNCH_WAIT_MS" android:value="0"/>
     <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="default_channel" tools:replace="android:value" />
     <activity android:name=".MainActivity" android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode" android:launchMode="singleTask" android:windowSoftInputMode="adjustResize" android:theme="@style/Theme.App.SplashScreen" android:exported="true" android:screenOrientation="portrait">
-      <service android:name="com.transistorsoft.rnbackgroundfetch.HeadlessTask" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="true"/>
-      <receiver   android:name="com.transistorsoft.rnbackgroundfetch.BootBroadcastReceiver" android:enabled="true" android:exported="true" android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
-        <intent-filter>
-          <action android:name="android.intent.action.BOOT_COMPLETED" />
-          <action android:name="android.intent.action.REBOOT" />
-          <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-        </intent-filter>
-      </receiver>
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
         <category android:name="android.intent.category.LAUNCHER"/>
@@ -40,5 +32,13 @@
         <data android:scheme="exp+householdenergymonitoringapp"/>
       </intent-filter>
     </activity>
+    <service android:name="com.transistorsoft.rnbackgroundfetch.HeadlessTask" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="true"/>
+    <receiver android:name="com.transistorsoft.rnbackgroundfetch.BootBroadcastReceiver" android:enabled="true" android:exported="true" android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+        <action android:name="android.intent.action.REBOOT" />
+        <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+      </intent-filter>
+    </receiver>
   </application>
 </manifest>
