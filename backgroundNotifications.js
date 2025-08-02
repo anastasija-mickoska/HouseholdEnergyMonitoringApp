@@ -1,42 +1,46 @@
-import BackgroundFetch from 'react-native-background-fetch';
-import notifee, {AndroidImportance} from '@notifee/react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BackgroundTask = async () => {
-  console.log('HeadlessTask Running background fetch');
+// import { AppRegistry } from 'react-native';
+// import BackgroundFetch from 'react-native-background-fetch';
+// import notifee, {AndroidImportance} from '@notifee/react-native';
+// import AsyncStorage from '@react-native-async-storage/async-storage';
 
-  try {
-    const householdId = await AsyncStorage.getItem('householdId');
-    const token = await AsyncStorage.getItem('token');
+// const BackgroundTask = async (taskId) => {
+//   console.log('HeadlessTask Running background fetch');
+//   try {
+//     const householdId = await AsyncStorage.getItem('householdId');
+//     const token = await AsyncStorage.getItem('token');
 
-    if (!householdId || !token) {
-      console.log('Missing householdId or token — skipping notification.');
-      return;
-    }
+//     if (!householdId || !token) {
+//       console.log('Missing householdId or token — skipping notification.');
+//       BackgroundFetch.finish(taskId);
+//       return;
+//     }
 
-    const res = await fetch(`http://192.168.1.108:8000/notifications/${householdId}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+//     const res = await fetch(`http://192.168.1.108:8000/notifications/${householdId}`, {
+//       method: 'POST',
+//       headers: {
+//         'Authorization': `Bearer ${token}`,
+//         'Content-Type': 'application/json',
+//       },
+//     });
 
-    const json = await res.json();
+//     const json = await res.json();
 
-    await notifee.displayNotification({
-      title: 'Reminder',
-      body: `Don't forget to log your electricity meter data today`,
-      android: {
-        channelId: 'high_importance_channel',
-        importance: AndroidImportance.HIGH,
-        sound: 'default',
-        pressAction: { id: 'default' },
-      },
-    });
-  } catch (err) {
-    console.error('Headless task error:', err);
-  }
-};
+//     await notifee.displayNotification({
+//       title: 'Reminder',
+//       body: `Don't forget to log your electricity meter data today`,
+//       android: {
+//         channelId: 'high_importance_channel',
+//         importance: AndroidImportance.HIGH,
+//         sound: 'default',
+//         pressAction: { id: 'default' },
+//       },
+//     });
+//   } catch (err) {
+//     console.error('Headless task error:', err);
+//   }
+//   console.log('HeadlessTask Running background fetch finishing now...');
+//   BackgroundFetch.finish(taskId);
+// };
 
-BackgroundFetch.registerHeadlessTask(BackgroundTask);
+// AppRegistry.registerHeadlessTask('BackgroundFetch', () => BackgroundTask);

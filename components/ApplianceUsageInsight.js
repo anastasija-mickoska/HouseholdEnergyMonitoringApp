@@ -233,14 +233,18 @@ const ApplianceUsageInsight = ({title}) => {
                 )}
             </View>
             <View>
-                {pieData && pieData.length > 0 && pieData.map((item, index) => (
+                {pieData && pieData.length > 0 ? pieData.map((item, index) => (
+                    <>
                         <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}>
                             <View style={{ width: 12, height: 12, backgroundColor: item.color, marginRight: 8, borderRadius: 2 }} />
                             <Text style={styles.itemText}>{item.text}: {item.value} KWh</Text>
                         </View>
-                ))}
+                        <Text style={styles.totalCostText}>Total cost: {totalCost} den</Text>
+                    </>
+                )) : 
+                    <Text style={styles.buttonText}>No appliance usage data available.</Text>
+                }
             </View>
-            <Text style={styles.totalCostText}>Total cost: {totalCost} den</Text>
             <View style={styles.buttons}>
                 <TouchableOpacity style={activePeriod === 'weekly' ? styles.active : styles.button} onPress={handlePressWeekly}>
                     <Text style={activePeriod === 'weekly' ? styles.activeText : styles.buttonText}>Weekly</Text>

@@ -29,7 +29,8 @@ const JoinHousehold = ({navigation}) => {
           userId,
           householdCode,
         };
-        const res = await fetch(`http://192.168.1.108:8000/households/${encodeURIComponent(householdName)}`, {
+        const encoded = encodeURIComponent(householdName);
+        const res = await fetch(`http://192.168.1.108:8000/households/${encoded}`, {
           method:'PATCH',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -39,6 +40,7 @@ const JoinHousehold = ({navigation}) => {
         });
         if (!res.ok) {
           const errJson = await res.json();
+          setIsSubmitting(false);
           Alert.alert('Error', errJson.error || 'Unknown error');
           return;
         }

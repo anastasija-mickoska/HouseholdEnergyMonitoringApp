@@ -182,12 +182,13 @@ const ElectricityMeterInsight = () => {
         )
     }
 
+    const hasChartData = !allValuesZeroDonutChart && !allValuesZeroBarChart && !loading;
     return(
         <View style={styles.container}>
             <Text style={styles.title}>Electricity Meter Data</Text>
-            <View style={styles.charts}>
-                {!allValuesZeroDonutChart && !allValuesZeroBarChart && !loading && 
-                    <>
+            {hasChartData ? (
+                <>
+                    <View style={styles.charts}>
                         <PieChart donut radius={60} innerRadius={45} data={data} isAnimated={true} centerLabelComponent={() => {
                             if ((activePeriod === 'weekly' && weeklyUsage > 0 && weeklyLimit > 0) ||(activePeriod === 'monthly' && monthlyUsage > 0 && monthlyLimit > 0)) {
                                 const usage = activePeriod === 'weekly' ? weeklyUsage : monthlyUsage;
@@ -205,8 +206,11 @@ const ElectricityMeterInsight = () => {
                             else {
                                 return(
                                     <View style={{ alignItems: 'center' }}>
-                                        <Text style={styles.percentage}>No data available</Text>
-                                    </View>  
+                                        <Text style={styles.consumption}>
+                                            0 KWh
+                                        </Text>
+                                        <Text style={styles.percentage}>0% of limit</Text>
+                                    </View>
                                 )
                             }
                         }}/>
@@ -223,14 +227,16 @@ const ElectricityMeterInsight = () => {
                             isAnimated
                             animationDuration={800}
                         />
-                    </>
-                }
-            </View>
-            <View style={styles.text}>
-                <Text style={styles.insights}>Low tariff consumption:{lowTariff} KWh</Text>
-                <Text style={styles.insights}>High tariff consumption:{highTariff} KWh</Text>
-                <Text style={styles.insights}>Total cost:{totalCost} den</Text>
-            </View>
+                    </View>
+                    <View style={styles.text}>
+                        <Text style={styles.insights}>Low tariff consumption: {lowTariff} KWh</Text>
+                        <Text style={styles.insights}>High tariff consumption: {highTariff} KWh</Text>
+                        <Text style={styles.insights}>Total cost: {totalCost} den</Text>
+                    </View>
+                </>
+            ) : (
+                <Text style={styles.buttonText}>No electricity meter data available</Text>
+            )}
             <View style={styles.buttons}>
                 <TouchableOpacity style={activePeriod === 'weekly' ? styles.active : styles.button} onPress={handlePressWeekly}>
                     <Text style={activePeriod === 'weekly' ? styles.activeText : styles.buttonText}>Weekly</Text>

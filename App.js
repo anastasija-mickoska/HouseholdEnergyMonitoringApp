@@ -47,8 +47,6 @@ const sendTokenToBackend = async (userId, fcmToken, token) => {
 
 const App = () => {
   const [fontsLoaded, setFontsLoaded] = useState(false);
-  const [householdId, setHouseholdId] = useState(null);
-  const [token, setToken] = useState(null);
   const appState = useRef(AppState.currentState);
   const navigationRef = useNavigationContainerRef();
 
@@ -58,8 +56,6 @@ const App = () => {
         'Roboto Flex': require('./assets/RobotoFlex.ttf'),
       });
       setFontsLoaded(true);
-      const storedHouseholdId = await AsyncStorage.getItem('householdId');
-      setHouseholdId(storedHouseholdId);
     }
     loadData();
   }, []);
@@ -84,7 +80,6 @@ const App = () => {
       try {
         const userId = await AsyncStorage.getItem('id');
         const fetchedToken = await AsyncStorage.getItem('token');
-        setToken(fetchedToken);
         if (!userId || !fetchedToken) {
           return;
         }
@@ -147,13 +142,14 @@ const App = () => {
       try {
         await BackgroundFetch.configure(
           {
-            minimumFetchInterval: 45,
+            minimumFetchInterval: 30,
             stopOnTerminate: false,
             startOnBoot: true,
             enableHeadless: true,
           },
           async (taskId) => {
             try {
+              console.log('Background notification task fetched now.');
               const householdId = await AsyncStorage.getItem('householdId');
               const token = await AsyncStorage.getItem('token');
               const res = await fetch(`http://192.168.1.108:8000/notifications/${householdId}`, {
@@ -169,6 +165,7 @@ const App = () => {
             } catch (error) {
               console.warn('Notification fetch error:', error.message);
             } finally {
+              console.log('Background notification task finishing now.');
               BackgroundFetch.finish(taskId);
             }
           },
@@ -207,11 +204,9 @@ const App = () => {
           const lastActiveTime = parseInt(lastActiveStr, 10);
           const now = Date.now();
           const diffMinutes = (now - lastActiveTime) / 1000 / 60;
-          console.log('Inactive time:', diffMinutes.toFixed(2), 'minutes');
 
-          if (diffMinutes >= 15) {
+          if (diffMinutes >= 360) {
             try {
-              console.log('Auto-logged out after inactivity');
               await signOut(auth);
               await AsyncStorage.clear();
               if (navigationRef.isReady()) {
