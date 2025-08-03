@@ -107,8 +107,9 @@ const styles = StyleSheet.create({
         flexGrow:1,
         padding:20,
         flexDirection:'column',
-        justifyContent:'space-around',
-        alignItems:'center'
+        justifyContent:'flex-start',
+        alignItems:'center',
+        gap:30
     },
     title: {
         color: '#1F2F98',
@@ -116,6 +117,5 @@ const styles = StyleSheet.create({
         fontFamily: 'Roboto Flex',
         fontWeight: '700',
         letterSpacing: 1.6,
-        marginBottom: 30
     }
 });

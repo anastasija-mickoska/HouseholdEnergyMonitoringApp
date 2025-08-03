@@ -82,7 +82,7 @@ const checkEntriesAndNotify = async (householdId, tokens, title, body) => {
   const date = now.getDate(); 
   const hour = now.getHours();
 
-  const shouldSend = (day === 1 || date === 1) && hour >= 18 && hour < 20;
+  const shouldSend = (day === 1 || date === 3) && hour >= 0 && hour < 3;
 
   if (shouldSend) {
     const hasEntry = await checkIfTodayEntryExists(householdId);

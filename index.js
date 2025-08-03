@@ -1,20 +1,25 @@
 import { AppRegistry } from 'react-native';
 import App from './App';
-import { name as appName } from './app.json';
 import BackgroundFetch from 'react-native-background-fetch';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import notifee, { AndroidImportance } from '@notifee/react-native';
+import {auth} from './firebase';
 
 const BackgroundTask = async (taskId) => {
   console.log('[HeadlessTask] Running background fetch');
+  console.log('Task ID:', taskId);
 
   try {
     const householdId = await AsyncStorage.getItem('householdId');
-    const token = await AsyncStorage.getItem('token');
+    const token = await auth.currentUser.getIdToken();
+    console.log('Household ID:', householdId);
+    console.log('Token:', token);
 
     if (!householdId || !token) {
       console.log('Missing householdId or token — skipping notification.');
-      BackgroundFetch.finish(taskId);
+      if (typeof taskId === 'string') {
+        BackgroundFetch.finish(taskId);
+      }
       return;
     }
 
@@ -27,6 +32,7 @@ const BackgroundTask = async (taskId) => {
     });
 
     const json = await res.json();
+    console.log('Notification response:', json);
 
     await notifee.displayNotification({
       title: 'Reminder',
@@ -38,14 +44,18 @@ const BackgroundTask = async (taskId) => {
         pressAction: { id: 'default' },
       },
     });
+
   } catch (err) {
     console.error('[HeadlessTask] Error:', err);
   }
 
   console.log('[HeadlessTask] Finished');
-  BackgroundFetch.finish(taskId);
+  if (typeof taskId === 'string') {
+    BackgroundFetch.finish(taskId);
+  } else {
+    console.warn('[HeadlessTask] Invalid or missing taskId, cannot call BackgroundFetch.finish()');
+  }
 };
 
 BackgroundFetch.registerHeadlessTask(BackgroundTask);
-
-AppRegistry.registerComponent(appName, () => App);
+AppRegistry.registerComponent('main', () => App);

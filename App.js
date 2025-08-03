@@ -142,16 +142,17 @@ const App = () => {
       try {
         await BackgroundFetch.configure(
           {
-            minimumFetchInterval: 30,
+            minimumFetchInterval: 15,
             stopOnTerminate: false,
             startOnBoot: true,
             enableHeadless: true,
+            requiredNetworkType: BackgroundFetch.NETWORK_TYPE_ANY,
           },
           async (taskId) => {
             try {
               console.log('Background notification task fetched now.');
               const householdId = await AsyncStorage.getItem('householdId');
-              const token = await AsyncStorage.getItem('token');
+              const token = await auth.currentUser.getIdToken();
               const res = await fetch(`http://192.168.1.108:8000/notifications/${householdId}`, {
                 method: 'POST',
                 headers: {
@@ -170,12 +171,12 @@ const App = () => {
             }
           },
           (error) => {
-            console.log('BackgroundFetch failed to configure', error);
+            console.error('BackgroundFetch failed to configure:', error);
+            if (error instanceof Error) {
+              console.error(error.stack);
+            }
           }
         );
-
-        await BackgroundFetch.start();
-        console.log('BackgroundFetch started');
       } catch (err) {
         console.warn('BackgroundFetch error:', err);
       }

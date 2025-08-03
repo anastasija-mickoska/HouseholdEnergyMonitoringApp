@@ -1,6 +1,7 @@
 const { db } = require('./config/firebaseConfig');
 const { startOfWeek, endOfWeek } = require('date-fns');
 const {calculateTotalApplianceUsage, calculateUsageConsumptionAndCost} = require('./usagesService');
+const {Timestamp} = require('firebase/firestore');
 
 const checkIfHouseholdExists = async (householdName, householdCode) => {
     try {
