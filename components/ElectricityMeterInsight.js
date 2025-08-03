@@ -272,11 +272,9 @@ const styles = StyleSheet.create({
     },
     charts: {
         width:'100%',
-        padding:10,
         flexDirection:'row',
-        justifyContent:'space-evenly',
+        justifyContent:'space-between',
         alignItems:'center',
-        gap:10
     },
     text: {
         backgroundColor: '#4ADEDE',

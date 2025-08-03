@@ -150,9 +150,9 @@ const App = () => {
           },
           async (taskId) => {
             try {
-              console.log('Background notification task fetched now.');
               const householdId = await AsyncStorage.getItem('householdId');
               const token = await auth.currentUser.getIdToken();
+              console.log('Background notification task fetched now - token', token);
               const res = await fetch(`http://192.168.1.108:8000/notifications/${householdId}`, {
                 method: 'POST',
                 headers: {
@@ -166,15 +166,12 @@ const App = () => {
             } catch (error) {
               console.warn('Notification fetch error:', error.message);
             } finally {
-              console.log('Background notification task finishing now.');
+              console.log('Background notification task finishing now');
               BackgroundFetch.finish(taskId);
             }
           },
           (error) => {
             console.error('BackgroundFetch failed to configure:', error);
-            if (error instanceof Error) {
-              console.error(error.stack);
-            }
           }
         );
       } catch (err) {
