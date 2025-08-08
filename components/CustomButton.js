@@ -4,7 +4,8 @@ const iconMap = {
   add: require('../assets/images/add.png'),
   edit: require('../assets/images/edit.png'),
   insights: require('../assets/images/bar_chart.png'),
-  notifications: require('../assets/images/notifications.png')
+  notifications: require('../assets/images/notifications.png'),
+  delete:require('../assets/images/delete.png')
 };
 
 const CustomButton = ({onPress, imgSource, text}) => {

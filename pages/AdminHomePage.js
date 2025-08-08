@@ -135,6 +135,28 @@ const AdminHomePage = ({ navigation }) => {
         }
     };
 
+    const deleteHousehold = async() => {
+        try {
+            const res = await fetch(`http://192.168.1.108:8000/households/${householdId}`, {
+                method:'DELETE',
+                headers: {
+                    'Authorization':`Bearer ${token}`
+                }
+            });
+            const json = await res.json();
+            if(json.error) {
+                Alert.alert(json.error);
+            }
+            else{
+                await AsyncStorage.setItem('householdId', null);
+                navigation.navigate('Welcome');
+            }
+        }
+        catch(error) {
+            console.error(error);
+        }
+    }
+
     const handleInsightsButton = () => {
         navigation.navigate('Insights');
     }
@@ -144,6 +166,11 @@ const AdminHomePage = ({ navigation }) => {
     const handleAddButton = () => {
         navigation.navigate('Add Usage');
     }   
+    const handleDeleteButton = async () => {
+        if (confirm('Are you sure?')) {
+            await deleteHousehold(householdId);
+        }
+    }
     
     if(loading) {
         return(
@@ -174,6 +201,7 @@ const AdminHomePage = ({ navigation }) => {
                 ]} />
                 <CustomButton text={'Manage Usage Limits'} imgSource={"edit"} onPress={handleUsageLimitsButton} />
                 <CustomButton text={'Add Energy Usage'} imgSource={"add"} onPress={handleAddButton}/>
+                <CustomButton text={'Delete Household'} imgSource={"delete"} onPress={handleDeleteButton}/>
             </View>
         </ScrollView>
         </PageLayout>

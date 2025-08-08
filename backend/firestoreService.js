@@ -2,6 +2,7 @@ const { db } = require('./config/firebaseConfig');
 const { startOfWeek, endOfWeek } = require('date-fns');
 const {calculateTotalApplianceUsage, calculateUsageConsumptionAndCost} = require('./usagesService');
 const admin = require('firebase-admin');
+const { updateDoc } = require('firebase/firestore');
 const Timestamp = admin.firestore.Timestamp;
 
 const checkIfHouseholdExists = async (householdName, householdCode) => {
@@ -88,6 +89,35 @@ const joinHousehold = async(householdId, userId, householdCode, householdName) =
         throw error;
     }
 };
+
+const deleteHousehold = async(householdId) => {
+    try {
+        await db.collection('Households').doc(householdId).delete();
+        const notifications = await db.collection('Notifications').where('householdId', '==', householdId).get();
+        for(const doc of notifications.docs) {
+            await doc.ref.delete();
+        }
+        const usersSnapshot = await db.collection('users').where('householdId', '==', householdId).get();
+        const userIdsInHousehold = usersSnapshot.docs.map(doc => doc.id); 
+        const applianceUsages = await db.collection('Appliance Energy Usages').where('userId', 'in', userIdsInHousehold).get();
+        for(const doc of applianceUsages.docs) {
+            await doc.ref.delete();
+        }
+        const electricityMeterUsages = await db.collection('Electricity Meter Usages').where('userId', 'in', userIdsInHousehold).get();
+        for(const doc of electricityMeterUsages.docs) {
+            await doc.ref.delete();
+        }
+        for (const userDoc of usersSnapshot.docs) {
+            await userDoc.ref.update({
+                householdId: null
+            });
+        }
+    }
+    catch(error) {
+        console.error('Error deleting household!', error);
+        throw error;
+    }
+}
 
 const getUserById = async (id) => {
     try {
@@ -360,6 +390,7 @@ module.exports = {
     getElectricityMeterUsagesForHousehold,
     joinHousehold,
     createHousehold,
+    deleteHousehold,
     addApplianceEnergyUsage,
     addElectricityMeterUsage,
     setUserHousehold,

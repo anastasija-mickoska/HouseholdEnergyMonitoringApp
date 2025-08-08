@@ -31,8 +31,10 @@
       },
       "edgeToEdgeEnabled": true,
       "permissions": [
+        "NOTIFICATIONS",
         "NOTIFICATIONS"
-      ]
+      ],
+      "package": "com.anastasija_m.HouseholdEnergyMonitoringApp"
     },
     "web": {
       "favicon": "./assets/images/logo.png"

@@ -172,6 +172,7 @@ const ElectricityMeterInsight = () => {
     const barChartData = activePeriod === 'weekly' ? chartDataWeekly : chartDataMonthly;
     const allValuesZeroBarChart = barChartData.every((item) => item.value === 0);
     const allValuesZeroDonutChart = data.every((item) => item.value === 0);
+    const maxValue = Math.max(...barChartData.map(item => item.value));
 
     if(loading) {
         return(
@@ -225,6 +226,8 @@ const ElectricityMeterInsight = () => {
                             xAxisLabelTextStyle={{ color: '#1F2F98', fontSize: 6 }}
                             yAxisTextStyle={{ color: '#1F2F98', fontSize: 6 }}
                             isAnimated
+                            maxValue={maxValue}
+                            noOfSections={5}
                             animationDuration={800}
                         />
                     </View>

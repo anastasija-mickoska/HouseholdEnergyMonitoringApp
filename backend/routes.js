@@ -5,6 +5,7 @@ const {
     getHouseholdById, 
     getHouseholdByName,
     joinHousehold, 
+    deleteHousehold,
     getUserById,
     getUsersForHousehold,
     getElectricityMeterUsagesForHousehold, 
@@ -387,6 +388,18 @@ router.post('/notifications/:householdId', authenticate, async(req,res) => {
         console.error('Error sending notification :', error);
         res.status(500).json({ error: error.message });
     }
+});
+
+router.delete('/households/:householdId', authenticate, async(req,res) => {
+  try {
+    const householdId = req.params.householdId;
+    await deleteHousehold(householdId);
+    res.status(204).json({message: 'Household deleted.'});
+  }
+  catch(error) {
+    console.error('Error deleting household!', error);
+    res.status(500).json({error: error.message});
+  }
 });
 
 module.exports = router;
