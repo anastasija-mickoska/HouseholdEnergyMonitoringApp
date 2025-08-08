@@ -59,6 +59,7 @@ messaging().setBackgroundMessageHandler(async (remoteMessage) => {
 });
 
 notifee.onBackgroundEvent(async ({ type, detail }) => {
+  await import('./firebase');
   if (type === EventType.ACTION_PRESS && detail.pressAction?.id === 'default') {
     console.log('Notification pressed in background');
   }
