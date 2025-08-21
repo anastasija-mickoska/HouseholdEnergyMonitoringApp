@@ -66,28 +66,22 @@ const ApplianceEnergyUsage = ({ navigation }) => {
                 },
                 body: JSON.stringify(usageData)
             });
-
-            if (!res.ok) {
-                throw new Error('Failed to submit usage data.');
-            }
-
             const json = await res.json();
-            if (json.message === 'Appliance energy usage added.') {
-                setTotalKwh(json.totalKWh);
-                setTotalCost(json.totalCost);
-                setModalVisibleAppliance(true);
-                setIsSubmitting(false);
-                setTimeout(() => {
-                    setModalVisibleAppliance(false);
-                    if(role === 'Admin') {
-                        navigation.navigate('Admin Home');
-                    }
-                    else if(role === 'User') {
-                        navigation.navigate('User Home');
-                    }
-                }, 3000);
+
+            if (res.ok) {
+                if (json.message === 'Appliance energy usage added.') {
+                    setTotalKwh(json.totalKWh);
+                    setTotalCost(json.totalCost);
+                    setModalVisibleAppliance(true);
+                    setIsSubmitting(false);
+                    setTimeout(() => {
+                        setModalVisibleAppliance(false);
+                        if(role === 'Admin') navigation.navigate('Admin Home');
+                        else if(role === 'User') navigation.navigate('User Home');
+                    }, 3000);
+                }
             } else {
-                Alert.alert(json.error || 'Unknown error');
+                Alert.alert('Faled to submit data!', json.error || 'Unknown error');
             }
         } catch (error) {
             setIsSubmitting(false);
@@ -107,7 +101,7 @@ const ApplianceEnergyUsage = ({ navigation }) => {
                         { name: 'date', label: 'Date', type: 'date', placeholder: "Date:", required: true },
                         { name: 'startingTime', label: 'Starting time', type: 'time', placeholder: "Starting time:", required: true },
                     ]}
-                    buttonText={"Submit"}
+                    buttonText={isSubmitting ? "Submitting..." : "Submit"}
                     buttonIcon={"check"}
                     onSubmit={handleSubmit}
                     isSubmitting={isSubmitting}

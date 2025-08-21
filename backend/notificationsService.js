@@ -52,7 +52,7 @@ const addNotification = async(householdId, tokens, title, notification) => {
 
 const getNotificationsForHousehold = async(householdId) => {
     try{
-        const snapshot = await db.collection('Notifications').where('householdId' , '==', householdId).get();
+        const snapshot = await db.collection('Notifications').where('householdId' , '==', householdId).orderBy('date','desc').get();
         const notifications = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
         return notifications;
     }
@@ -82,7 +82,7 @@ const checkEntriesAndNotify = async (householdId, tokens, title, body) => {
   const date = now.getDate(); 
   const hour = now.getHours();
 
-  const shouldSend = (day === 1 || date === 3) && hour >= 19 && hour < 21;
+  const shouldSend = (day === 1 || date === 1) && hour >= 16 && hour < 18;
 
   if (shouldSend) {
     const hasEntry = await checkIfTodayEntryExists(householdId);

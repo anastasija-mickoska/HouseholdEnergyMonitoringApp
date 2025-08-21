@@ -86,13 +86,13 @@ router.get('/users/:id', authenticate, async(req, res)=> {
 router.patch('/users/:id', authenticate, async (req, res) => {
   try {
     const id = req.params.id;
-    const { householdId, token } = req.body;
+    const { householdId, fcmToken } = req.body;
     if (householdId !== undefined) {
       await setUserHousehold(id, householdId);
       return res.status(200).json({ message: 'Household attached to user.' });
     }
-    if (token !== undefined) {
-      await setUserFcmToken(id, token);
+    if (fcmToken !== undefined) {
+      await setUserFcmToken(id, fcmToken);
       return res.status(200).json({ message: 'FCM token updated for user.' });
     }
     res.status(400).json({ error: 'No valid field provided. Provide either householdId or token.' });
@@ -162,18 +162,21 @@ router.post('/electricityMeterUsages', authenticate, async(req,res)=> {
     const sentNotificationsText = sentNotifications.map((item)=> {
       return item.notification;
     });
-
-    if (weeklyUsage >= 0.8 * Number(weeklyLimit) && weeklyUsage < Number(weeklyLimit)) {
+    if(Number(weeklyLimit) > 0) {
+      if (weeklyUsage >= 0.8 * Number(weeklyLimit) && weeklyUsage < Number(weeklyLimit)) {
         notificationsToSend.push(`80% of the weekly household limit for period ${startWeek} - ${endWeek} reached!`);
+      }
+      if (weeklyUsage >= Number(weeklyLimit)) {
+          notificationsToSend.push(`Weekly household limit for period ${startWeek} - ${endWeek} reached!`);
+      }
     }
-    if (weeklyUsage >= Number(weeklyLimit)) {
-        notificationsToSend.push(`Weekly household limit for period ${startWeek} - ${endWeek} reached!`);
-    }
-    if (monthlyUsage >= 0.8 * Number(monthlyLimit) && monthlyUsage < Number(monthlyLimit)) {
+    if(Number(monthlyLimit) > 0) {
+      if (monthlyUsage >= 0.8 * Number(monthlyLimit) && monthlyUsage < Number(monthlyLimit)) {
         notificationsToSend.push(`80% of the monthly household limit for ${month} reached!`);
-    }
-    if (monthlyUsage >= Number(monthlyLimit)) {
-        notificationsToSend.push(`Monthly household limit for ${month} reached!`);
+      }
+      if (monthlyUsage >= Number(monthlyLimit)) {
+          notificationsToSend.push(`Monthly household limit for ${month} reached!`);
+      }
     }
     for (const message of notificationsToSend) {
       if(sentNotificationsText.includes(message)) {
@@ -394,7 +397,7 @@ router.delete('/households/:householdId', authenticate, async(req,res) => {
   try {
     const householdId = req.params.householdId;
     await deleteHousehold(householdId);
-    res.status(204).json({message: 'Household deleted.'});
+    res.status(200).json({message: 'Household deleted.'});
   }
   catch(error) {
     console.error('Error deleting household!', error);

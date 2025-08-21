@@ -26,16 +26,20 @@ const BackgroundTask = async (taskId) => {
         'Content-Type': 'application/json',
       },
     });
-    await notifee.displayNotification({
-      title: 'Reminder',
-      body: `Don't forget to log your electricity meter data today`,
-      android: {
-        channelId: 'high_importance_channel',
-        importance: AndroidImportance.HIGH,
-        sound: 'default',
-        pressAction: { id: 'default' },
-      },
-    });
+    try {
+      await notifee.displayNotification({
+        title: 'Reminder',
+        body: `Don't forget to log your electricity meter data today`,
+        android: {
+          channelId: 'high_importance_channel',
+          importance: AndroidImportance.HIGH,
+          sound: 'default',
+          pressAction: { id: 'default' },
+        },
+      });
+    } catch (e) {
+      console.warn('Notifee notification failed:', e.message);
+    }
   } catch (err) {
     console.error('[HeadlessTask] Error:', err);
   }
@@ -48,7 +52,7 @@ messaging().setBackgroundMessageHandler(async (remoteMessage) => {
   await import('./firebase');
   await notifee.displayNotification({
     title: remoteMessage.notification?.title || 'Reminder',
-    body: remoteMessage.notification?.body || '',
+    body: remoteMessage.notification?.body || `Don't forget to log your electricity meter data today`,
     android: {
       channelId: 'high_importance_channel',
       importance: AndroidImportance.HIGH,

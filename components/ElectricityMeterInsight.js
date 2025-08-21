@@ -225,7 +225,6 @@ const ElectricityMeterInsight = () => {
                             xAxisColor={'#1F2F98'}
                             xAxisLabelTextStyle={{ color: '#1F2F98', fontSize: 6 }}
                             yAxisTextStyle={{ color: '#1F2F98', fontSize: 6 }}
-                            showYAxisIndices
                             isAnimated
                             maxValue={maxValue}
                             noOfSections={Math.ceil(maxValue/100)}

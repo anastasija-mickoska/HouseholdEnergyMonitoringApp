@@ -142,7 +142,7 @@ const App = () => {
       try {
         await BackgroundFetch.configure(
           {
-            minimumFetchInterval: 15,
+            minimumFetchInterval: 60,
             stopOnTerminate: false,
             startOnBoot: true,
             enableHeadless: true,
@@ -152,7 +152,7 @@ const App = () => {
             try {
               const householdId = await AsyncStorage.getItem('householdId');
               const token = await auth.currentUser.getIdToken();
-              console.log('Background notification task fetched now - token', token);
+              console.log('Background notification task fetched now');
               const res = await fetch(`http://192.168.1.108:8000/notifications/${householdId}`, {
                 method: 'POST',
                 headers: {

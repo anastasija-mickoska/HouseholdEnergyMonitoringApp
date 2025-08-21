@@ -148,7 +148,7 @@ const AdminHomePage = ({ navigation }) => {
                 Alert.alert(json.error);
             }
             else{
-                await AsyncStorage.setItem('householdId', null);
+                await AsyncStorage.removeItem('householdId'); 
                 navigation.navigate('Welcome');
             }
         }
@@ -167,11 +167,23 @@ const AdminHomePage = ({ navigation }) => {
         navigation.navigate('Add Usage');
     }   
     const handleDeleteButton = async () => {
-        if (confirm('Are you sure?')) {
-            await deleteHousehold(householdId);
-        }
-    }
-    
+        Alert.alert(
+            "Confirm Delete",
+            "Are you sure you want to delete the household?",
+            [
+            {
+                text: "Cancel",
+                style: "cancel"
+            },
+            {
+                text: "Delete",
+                style: "destructive",
+                onPress: () => deleteHousehold()
+            }
+            ]
+        );
+    };
+            
     if(loading) {
         return(
             <PageLayout navigation={navigation}>

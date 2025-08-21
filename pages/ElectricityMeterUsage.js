@@ -51,29 +51,27 @@ const ElectricityMeterUsage = ({navigation}) => {
             },
             body: JSON.stringify(usageData)
           });
-
-          if (!res.ok) {
-              throw new Error('Failed to submit usage data.');
-          }
-
           const json = await res.json();
-          if(json.message == 'Electricity meter usage added.') {
-            setTotalKwh(json.totalKWh);
-            setTotalCost(json.totalCost);
-            setModalVisibleElectricityMeter(true);
-            setIsSubmitting(false);
-            setTimeout(() => {
-                setModalVisibleElectricityMeter(false);
-                if(role === 'Admin') {
-                    navigation.navigate('Admin Home');
-                }
-                else if(role === 'User') {
-                    navigation.navigate('User Home');
-                }
-            }, 3000);
+
+          if(res.ok) {
+            if(json.message == 'Electricity meter usage added.') {
+              setTotalKwh(json.totalKWh);
+              setTotalCost(json.totalCost);
+              setModalVisibleElectricityMeter(true);
+              setIsSubmitting(false);
+              setTimeout(() => {
+                  setModalVisibleElectricityMeter(false);
+                  if(role === 'Admin') {
+                      navigation.navigate('Admin Home');
+                  }
+                  else if(role === 'User') {
+                      navigation.navigate('User Home');
+                  }
+              }, 3000);
+            }
           }
           else {
-            Alert.alert(json.error || 'Unknown error');
+              Alert.alert('Failed to submit data!', json.error || 'Unknown error');
           }
         }
         catch(error) {
@@ -89,7 +87,7 @@ const ElectricityMeterUsage = ({navigation}) => {
           title="Electricity Meter Data"
           registerQuestion={false}
           fields={fields}
-          buttonText={"Submit"}
+          buttonText={isSubmitting ? "Submitting...":"Submit"}
           buttonIcon={"check"} 
           onSubmit = {handleSubmit}
           isSubmitting={isSubmitting}
@@ -124,8 +122,7 @@ const styles = StyleSheet.create({
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: 'rgba(0,0,0,0.5)',
-      padding:20,
-      marginTop:22
+      padding:20
   },
   modalText: {
       backgroundColor:'#4ADEDE',

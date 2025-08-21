@@ -4,7 +4,7 @@ import { View, Text, StyleSheet} from 'react-native';
 const UsageComponent = ({week, month}) => {
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Current Electricity Usage</Text>
+            <Text style={styles.title}>Electricity Usage</Text>
             <View style={styles.usage}>
                 <View style={styles.weekMonth}>
                     <Text style={styles.text}>This week</Text>
@@ -33,7 +33,7 @@ const styles=StyleSheet.create({
     },
     title: {
         color: '#1F2F98',
-        fontSize: 22,
+        fontSize: 24,
         fontFamily: 'Roboto Flex',
         fontWeight: '700',
         letterSpacing: 1.2,

@@ -206,7 +206,7 @@ const ApplianceUsageInsight = ({title}) => {
             <View style={styles.charts}>
                 {data.length > 0 && 
                     <PieChart donut radius={60} innerRadius={45} data={data} isAnimated={true} centerLabelComponent={() => {
-                        if(weeklyUsage != null && monthlyUsage !=null && totalKWhMonthly!= null && totalKWhWeekly !=null) {
+                        if(weeklyUsage != 0 && monthlyUsage != 0 && totalKWhMonthly!= 0 && totalKWhWeekly != 0) {
                             const usage = activePeriod === 'weekly' ? (weeklyUsage ?? 1) : (monthlyUsage ?? 1);
                             const totalKWh = activePeriod === 'weekly' ? (totalKWhWeekly ?? 0) : (totalKWhMonthly ?? 0);
                             const percentage = ((totalKWh / usage) * 100) || 0;
@@ -233,17 +233,19 @@ const ApplianceUsageInsight = ({title}) => {
                 )}
             </View>
             <View>
-                {pieData && pieData.length > 0 ? pieData.map((item, index) => (
-                    <>
-                        <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}>
-                            <View style={{ width: 12, height: 12, backgroundColor: item.color, marginRight: 8, borderRadius: 2 }} />
-                            <Text style={styles.itemText}>{item.text}: {item.value} KWh</Text>
-                        </View>
-                        <Text style={styles.totalCostText}>Total cost: {totalCost} den</Text>
-                    </>
-                )) : 
-                    <Text style={styles.buttonText}>No appliance usage data available.</Text>
-                }
+            {pieData && pieData.length > 0 ? (
+            <>
+                {pieData.map((item, index) => (
+                <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}>
+                    <View style={{ width: 12, height: 12, backgroundColor: item.color, marginRight: 8, borderRadius: 2 }} />
+                    <Text style={styles.itemText}> {item.text}: {item.value} KWh </Text>
+                </View>
+                ))}
+                <Text style={styles.totalCostText}> Total cost: {totalCost} den </Text>
+            </>
+            ) : (
+                <Text style={styles.buttonText}> No appliance usage data available. </Text>
+            )}
             </View>
             <View style={styles.buttons}>
                 <TouchableOpacity style={activePeriod === 'weekly' ? styles.active : styles.button} onPress={handlePressWeekly}>

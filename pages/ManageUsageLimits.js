@@ -1,7 +1,7 @@
 import PageLayout from "../components/PageLayout";
 import WeeklyMonthlyInsight from "../components/WeeklyMonthlyInsight";
 import UsageLimits from '../components/UsageLimits';
-import { Alert, StyleSheet, Text, ScrollView } from "react-native";
+import { Alert, StyleSheet, Text, ScrollView, Modal, View } from "react-native";
 import { useEffect, useState } from "react";
 import { auth } from '../firebase';
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -12,6 +12,7 @@ const ManageUsageLimits = ({navigation}) => {
     const [monthlyLimit, setMonthlyLimit] = useState('0'); 
     const [token, setToken] = useState(null);
     const [role, setRole] = useState(null);
+    const [modalVisibleLimits, setModalVisibleLimits] = useState(false);
 
     useEffect(() => {
         const loadData = async () => {
@@ -65,13 +66,16 @@ const ManageUsageLimits = ({navigation}) => {
             });
             const json = await res.json();
             if (json.message && json.message === 'Limits saved.') {
-                Alert.alert('Limits saved successfully.');
-                if(role === 'Admin') {
-                    navigation.navigate('Admin Home');
-                }
-                else if(role === 'User') {
-                    navigation.navigate('User Home');
-                }
+                setModalVisibleLimits(true);
+                setTimeout(() => {
+                    setModalVisibleLimits(false);
+                    if(role === 'Admin') {
+                        navigation.navigate('Admin Home');
+                    }
+                    else if(role === 'User') {
+                        navigation.navigate('User Home');
+                    }
+                }, 3000);
             } else {
                 Alert.alert(json.error || 'Error saving limits.');
             }
@@ -96,6 +100,13 @@ const ManageUsageLimits = ({navigation}) => {
                     monthlyLimit={monthlyLimit} 
                     onSave={saveLimits} />
             </ScrollView>
+            <Modal transparent={true} visible={modalVisibleLimits} animationType="fade">
+                <View style={styles.modal}>
+                    <Text style={styles.modalText}>
+                        Limits saved successfully.
+                    </Text>
+                </View>
+            </Modal>
         </PageLayout>
     );
 }
@@ -117,5 +128,20 @@ const styles = StyleSheet.create({
         fontFamily: 'Roboto Flex',
         fontWeight: '700',
         letterSpacing: 1.6,
+    },
+    modal: {
+      flex: 1,
+      width:'100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      padding:20
+    },
+    modalText: {
+        backgroundColor:'#4ADEDE',
+        color: '#F3F3F3',
+        padding: 20,
+        borderRadius: 10,
+        textAlign: 'center'
     }
 });

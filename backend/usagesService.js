@@ -28,6 +28,24 @@ const getElectricityPrices = async() => {
     }
 };
 
+const getLastElectricityMeterReading = async(householdId) => {
+    try {
+        const snapshot = await db.collection('Electricity Meter Usages').where('householdId', '==', householdId).orderBy('date','desc').limit(1).get();
+        if(snapshot.empty) {
+            return {highTariff: '0.00', lowTariff: '0.00'};
+        }
+        const reading = snapshot.docs[0];
+        const readingData = reading.data();
+        const highTariff = parseFloat(readingData.highTariff ?? 0);
+        const lowTariff = parseFloat(readingData.lowTariff ?? 0);
+        return {id: reading.id, highTariff: highTariff.toFixed(2), lowTariff: lowTariff.toFixed(2)};
+    }
+    catch(error) {
+        console.error('Error getting the latest reading!', error);
+        throw error;
+    }
+}
+
 const getMonthlyReadings = async(householdId) => {
     try {
         const now = new Date();
@@ -36,7 +54,13 @@ const getMonthlyReadings = async(householdId) => {
         const monthlyUsagesData = monthlyUsages.docs.map(doc => ({id:doc.id, ...doc.data()})).sort((a, b) => a.date.toDate() - b.date.toDate());
         if (monthlyUsagesData.length < 2) {
             console.warn('Not enough data to calculate monthly consumption.');
-            return 0;
+            return {
+                firstReadingLowTariff: '0.00',
+                lastReadingLowTariff: '0.00',
+                firstReadingHighTariff: '0.00',
+                lastReadingHighTariff: '0.00',
+                month: startOfMonth
+            };
         }
         const firstReadingLowTariff = parseFloat(monthlyUsagesData[0].lowTariff); 
         const firstReadingHighTariff = parseFloat(monthlyUsagesData[0].highTariff);
@@ -44,7 +68,8 @@ const getMonthlyReadings = async(householdId) => {
         const lastReadingHighTariff = parseFloat(monthlyUsagesData[monthlyUsagesData.length - 1].highTariff);      
         
         return {firstReadingLowTariff: firstReadingLowTariff.toFixed(2), lastReadingLowTariff: lastReadingLowTariff.toFixed(2),
-            firstReadingHighTariff: firstReadingHighTariff.toFixed(2), lastReadingHighTariff: lastReadingHighTariff.toFixed(2)};
+            firstReadingHighTariff: firstReadingHighTariff.toFixed(2), lastReadingHighTariff: lastReadingHighTariff.toFixed(2),
+            month: startOfMonth};
     }
     catch(error) {
         console.error('Error getting monthly readings!', error);
@@ -54,35 +79,14 @@ const getMonthlyReadings = async(householdId) => {
 
 const getMonthlyElectricityCostAndConsumption = async (householdId) => {
     try {
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const monthlyUsages = await db.collection('Electricity Meter Usages')
-            .where('householdId', '==', householdId)
-            .where('date', '>=', startOfMonth)
-            .where('date', '<=', now)
-            .get();
-
-        const monthlyUsagesData = monthlyUsages.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        })).sort((a, b) => a.date.toDate() - b.date.toDate());
-
-        if (monthlyUsagesData.length === 0) {
-            return {
-                lowTariffConsumption: '0.00',
-                highTariffConsumption: '0.00',
-                totalCost: '0.00',
-                totalConsumption: '0.00'
-            };
-        }
-
-        const firstReadingLowTariff = parseFloat(monthlyUsagesData[0].lowTariff ?? 0);
-        const firstReadingHighTariff = parseFloat(monthlyUsagesData[0].highTariff ?? 0);
-        const lastReadingLowTariff = parseFloat(monthlyUsagesData[monthlyUsagesData.length - 1].lowTariff ?? 0);
-        const lastReadingHighTariff = parseFloat(monthlyUsagesData[monthlyUsagesData.length - 1].highTariff ?? 0);
+        const monthly = await getMonthlyReadings(householdId);
+        const firstReadingLowTariff = parseFloat(monthly.firstReadingLowTariff ?? 0);
+        const firstReadingHighTariff = parseFloat(monthly.firstReadingHighTariff ?? 0);
+        const lastReadingLowTariff = parseFloat(monthly.lastReadingLowTariff ?? 0);
+        const lastReadingHighTariff = parseFloat(monthly.lastReadingHighTariff ?? 0);
 
         const monthlyConsumptionLowTariff = lastReadingLowTariff - firstReadingLowTariff;
-        let monthlyConsumptionHighTariff = lastReadingHighTariff - firstReadingHighTariff;
+        const monthlyConsumptionHighTariff = lastReadingHighTariff - firstReadingHighTariff;
 
         const prices = await getElectricityPrices();
         const lowTariffPrice = prices.find(p => p.tariff === 'Low tariff')?.price ?? 0;
@@ -115,7 +119,7 @@ const getMonthlyElectricityCostAndConsumption = async (householdId) => {
             highTariffConsumption: monthlyConsumptionHighTariff.toFixed(2),
             totalCost: (monthlyCostHighTariff + monthlyCostLowTariff).toFixed(2),
             totalConsumption: totalConsumption.toFixed(2),
-            monthStart:startOfMonth
+            monthStart: monthly.month
         };
     } catch (error) {
         console.error('Error calculating electricity cost!', error);
@@ -133,18 +137,18 @@ const getWeeklyElectricityCostAndConsumption = async (householdId) => {
             .where('date', '>=', startOfWeekDate)
             .where('date', '<=', now)
             .get();
-
         const weeklyUsagesData = weeklyUsages.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
         })).sort((a, b) => a.date.toDate() - b.date.toDate());
-
-        if (weeklyUsagesData.length === 0) {
+        if (weeklyUsagesData.length < 2) {
             return {
                 lowTariffConsumption: '0.00',
                 highTariffConsumption: '0.00',
                 totalCost: '0.00',
-                totalConsumption: '0.00'
+                totalConsumption: '0.00',
+                startOfWeek: startOfWeekDate,
+                endOfWeek: endOfWeekDate
             };
         }
 
@@ -172,24 +176,22 @@ const getWeeklyElectricityCostAndConsumption = async (householdId) => {
         const firstReadingHighTariffMonthly = monthlyReadings.firstReadingHighTariff;
         const lastReadingHighTariffMonthly = monthlyReadings.lastReadingHighTariff;
 
-        const monthlyHighTariffBeforeThisWeek = firstReadingHighTariffMonthly;
-        const monthlyHighTariffAfterThisWeek = lastReadingHighTariffMonthly;
-
         let remainingWeeklyConsumption = weeklyConsumptionHighTariff;
-        let currentMonthlyConsumption = monthlyHighTariffBeforeThisWeek;
+        let currentMonthlyConsumption = lastReadingHighTariffMonthly - firstReadingHighTariffMonthly; 
+        let startOfWeekConsumption = currentMonthlyConsumption - remainingWeeklyConsumption;
         let weeklyCostHighTariff = 0;
 
         for (let block of blocks) {
             const blockLower = block.lowerLimit;
             const blockUpper = block.upperLimit;
-            const blockCapacity = blockUpper - Math.max(currentMonthlyConsumption, blockLower);
+            const blockCapacity = blockUpper - Math.max(startOfWeekConsumption, blockLower);
 
             if (blockCapacity <= 0) continue; 
 
             const consumptionInBlock = Math.min(remainingWeeklyConsumption, blockCapacity);
             weeklyCostHighTariff += consumptionInBlock * block.price;
 
-            currentMonthlyConsumption += consumptionInBlock;
+            startOfWeekConsumption += consumptionInBlock;
             remainingWeeklyConsumption -= consumptionInBlock;
 
             if (remainingWeeklyConsumption <= 0) break;
@@ -322,12 +324,18 @@ const calculateUsageConsumptionAndCost = async (usage) => {
             highTariffKWh = highHours * consumptionPerHour;
             lowTariffKWh = lowHours * consumptionPerHour;
         }
-        else if(usage.highTariff && usage.lowTariff) { //electricity meter usage
-            const monthlyReadings = await getMonthlyReadings(usage.householdId);
-            const lastReadingLowTariff = parseFloat(monthlyReadings?.lastReadingLowTariff || 0);
-            const lastReadingHighTariff = parseFloat(monthlyReadings?.lastReadingHighTariff || 0);
-            highTariffKWh = (usage.highTariff - lastReadingHighTariff);
-            lowTariffKWh = (usage.lowTariff - lastReadingLowTariff);
+        else if (usage.highTariff !== undefined && usage.lowTariff !== undefined) { //electricity meter usage
+            const lastReading = await getLastElectricityMeterReading(usage.householdId);
+            const lastReadingLowTariff = parseFloat(lastReading.lowTariff ?? 0);
+            const lastReadingHighTariff = parseFloat(lastReading.highTariff ?? 0);
+
+            if (lastReadingHighTariff === 0 && lastReadingLowTariff === 0) {
+                highTariffKWh = 0;
+                lowTariffKWh = 0;
+            } else {
+                highTariffKWh = parseFloat(usage.highTariff) - lastReadingHighTariff;
+                lowTariffKWh = parseFloat(usage.lowTariff) - lastReadingLowTariff;
+            }
         }
 
         const highCost = highTariffKWh * highTariffPrice;
