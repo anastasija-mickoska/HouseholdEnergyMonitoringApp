@@ -174,6 +174,13 @@ const ElectricityMeterInsight = () => {
     const allValuesZeroDonutChart = data.every((item) => item.value === 0);
     const maxValue = Math.max(...barChartData.map(item => item.value));
 
+    const desiredNoSections = (maxValue <= 300) ? Math.ceil(maxValue / 50) : Math.ceil(maxValue/100);
+    let stepValue = 50;
+    if (stepValue * desiredNoSections < maxValue) {
+        stepValue = 100;
+    }
+    const roundedMax = stepValue * desiredNoSections;
+
     if(loading) {
         return(
             <View style={styles.container}>
@@ -226,8 +233,9 @@ const ElectricityMeterInsight = () => {
                             xAxisLabelTextStyle={{ color: '#1F2F98', fontSize: 6 }}
                             yAxisTextStyle={{ color: '#1F2F98', fontSize: 6 }}
                             isAnimated
-                            maxValue={maxValue}
-                            noOfSections={Math.ceil(maxValue/100)}
+                            maxValue={roundedMax}
+                            noOfSections={desiredNoSections}
+                            stepValue={stepValue}
                             animationDuration={800}
                         />
                     </View>

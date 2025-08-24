@@ -206,26 +206,35 @@ const ApplianceUsageInsight = ({title}) => {
             <View style={styles.charts}>
                 {data.length > 0 && 
                     <PieChart donut radius={60} innerRadius={45} data={data} isAnimated={true} centerLabelComponent={() => {
-                        if(weeklyUsage != 0 && monthlyUsage != 0 && totalKWhMonthly!= 0 && totalKWhWeekly != 0) {
-                            const usage = activePeriod === 'weekly' ? (weeklyUsage ?? 1) : (monthlyUsage ?? 1);
-                            const totalKWh = activePeriod === 'weekly' ? (totalKWhWeekly ?? 0) : (totalKWhMonthly ?? 0);
-                            const percentage = ((totalKWh / usage) * 100) || 0;
-                            return (
-                                <View style={{ alignItems: 'center' }}>
-                                    <Text style={styles.consumption}>
-                                        {(totalKWh ?? 0).toFixed(1)} KWh
-                                    </Text>
-                                    <Text style={styles.percentage}>{percentage.toFixed(0)}% of total {activePeriod} usage</Text>
-                                </View>
-                            );
-                        }
-                        else {
-                            return(
-                                <View style={{ alignItems: 'center' }}>
-                                    <Text style={styles.percentage}>No data available</Text>
-                                </View>  
-                            )
-                        }
+                    const values = [
+                    weeklyUsage ?? 0,
+                    monthlyUsage ?? 0,
+                    totalKWhWeekly ?? 0,
+                    totalKWhMonthly ?? 0
+                    ];
+
+                    if (values.some(v => v !== 0)) {
+                    const usage = activePeriod === 'weekly' ? (weeklyUsage ?? 1) : (monthlyUsage ?? 1);
+                    const totalKWh = activePeriod === 'weekly' ? (totalKWhWeekly ?? 0) : (totalKWhMonthly ?? 0);
+                    const percentage = ((totalKWh / usage) * 100) || 0;
+
+                    return (
+                        <View style={{ alignItems: 'center' }}>
+                        <Text style={styles.consumption}>
+                            {totalKWh.toFixed(1)} KWh
+                        </Text>
+                        <Text style={styles.percentage}>
+                            {percentage.toFixed(0)}% of total {activePeriod} usage
+                        </Text>
+                        </View>
+                    );
+                    } else {
+                    return (
+                        <View style={{ alignItems: 'center' }}>
+                        <Text style={styles.percentage}>No data available</Text>
+                        </View>
+                    );
+                    }
                     }}/>
                 }
                 {pieData && pieData.length > 1 && (
