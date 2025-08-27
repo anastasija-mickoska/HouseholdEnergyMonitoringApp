@@ -16,10 +16,13 @@ const UserHomePage = ({navigation}) => {
     const [householdName, setHouseholdName] = useState('');
     const [weeklyLimit, setWeeklyLimit] = useState('');
     const [monthlyLimit, setMonthlyLimit] = useState('');
+    const [dailyUsage, setDailyUsage] = useState(null);
     const [weeklyUsage, setWeeklyUsage] = useState(null);
     const [monthlyUsage, setMonthlyUsage] = useState(null);
+    const [dailyCost, setDailyCost] = useState(null);
     const [weeklyCost, setWeeklyCost] = useState(null);
     const [monthlyCost, setMonthlyCost] = useState(null);
+    const [totalKWhDaily, setTotalKWhDaily] = useState(null);
     const [totalKWhWeekly, setTotalKWhWeekly] = useState(null);
     const [totalKWhMonthly, setTotalKWhMonthly] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -106,6 +109,20 @@ const UserHomePage = ({navigation}) => {
         
     const fetchElectricityCostAndConsumption = async() => {
         try {
+            const r = await fetch(`http://192.168.1.108:8000/dailyElectricityUsage/${householdId}`, {
+                method:'GET',
+                headers: {
+                    'Authorization':`Bearer ${token}`
+                }
+            });
+            const j = await r.json();
+            if(j.error) {
+                Alert.alert(j.error);
+            }
+            else {
+                setDailyCost(j.totalCost);
+                setDailyUsage(j.totalConsumption);
+            }
             const res = await fetch(`http://192.168.1.108:8000/weeklyElectricityUsage/${householdId}`, {
                 method:'GET',
                 headers: {
@@ -142,6 +159,19 @@ const UserHomePage = ({navigation}) => {
 
     const fetchApplianceUsageForUser = async() => {
         try {
+            const r = await fetch(`http://192.168.1.108:8000/applianceEnergyUsages?userId=${userId}&type=daily`, {
+                method:'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const j = await r.json();
+            if(j.error) {
+                Alert.alert(j.error);
+            }
+            else {
+                setTotalKWhDaily(j.totalKWh);
+            }
             const res = await fetch(`http://192.168.1.108:8000/applianceEnergyUsages?userId=${userId}&type=weekly`, {
                 method:'GET',
                 headers: {
@@ -203,11 +233,11 @@ const UserHomePage = ({navigation}) => {
                     <View style={styles.household}>
                         <Text style={styles.householdName}>{householdName}</Text> 
                     </View>
-                    <UsageComponent week={`${weeklyUsage ?? 0}`} month={`${monthlyUsage ?? 0}`} />
+                    <UsageComponent day={`${dailyUsage ?? 0}`} week={`${weeklyUsage ?? 0}`} month={`${monthlyUsage ?? 0}`} />
                     <Limits week={weeklyLimit} month={monthlyLimit}/>
-                    <WeeklyMonthlyInsight title={'Your Appliance Usage'} texts={['This Week', 'This Month']} values={[`${totalKWhWeekly ?? 0} KWh`, `${totalKWhMonthly ?? 0} KWh`]}/>
+                    <WeeklyMonthlyInsight title={'Your Appliance Usage'} texts={['Today','This Week', 'This Month']} values={[`${totalKWhDaily ?? 0} KWh`, `${totalKWhWeekly ?? 0} KWh`, `${totalKWhMonthly ?? 0} KWh`]}/>
                     <CustomButton text={'View Insights'} imgSource={"insights"} onPress={handleInsightsButton}/>
-                    <WeeklyMonthlyInsight title={'Electricity Cost'} texts={['This week', 'This month']} values={[`${weeklyCost ?? 0} den`, `${monthlyCost ?? 0} den`]} />
+                    <WeeklyMonthlyInsight title={'Electricity Cost'} texts={['Today','This week', 'This month']} values={[`${dailyCost ?? 0} den`,`${weeklyCost ?? 0} den`, `${monthlyCost ?? 0} den`]} />
                     <CustomButton text={'Add Energy Usage'} imgSource={"add"} onPress={handleAddButton}/>
                 </View>
             </ScrollView>

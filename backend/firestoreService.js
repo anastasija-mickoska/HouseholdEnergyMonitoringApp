@@ -1,5 +1,5 @@
 const { db } = require('./config/firebaseConfig');
-const { startOfWeek, endOfWeek } = require('date-fns');
+const { startOfWeek, endOfWeek, startOfDay, endOfDay } = require('date-fns');
 const {calculateTotalApplianceUsage, calculateUsageConsumptionAndCost} = require('./usagesService');
 const admin = require('firebase-admin');
 const { updateDoc } = require('firebase/firestore');
@@ -174,6 +174,13 @@ const getElectricityMeterUsagesForHousehold = async(householdId) => {
 const getApplianceEnergyUsagesForHousehold = async(householdId, type) => {
     try {
         let usages;
+        if(type == 'daily') {
+            const now = new Date();
+            const startOfToday = startOfDay(now);
+            const endOfToday = endOfDay(now);
+            const dailyUsages = await db.collection('Appliance Energy Usages').where('householdId', '==', householdId).where('date', '>=', startOfToday).where('date', '<=', endOfToday).get();
+            usages = dailyUsages.docs.map(doc => ({id:doc.id, ...doc.data()}));          
+        }
         if(type == 'weekly') {
             const now = new Date();
             const startOfWeekDate = startOfWeek(now, { weekStartsOn: 1 });
@@ -199,6 +206,13 @@ const getApplianceEnergyUsagesForHousehold = async(householdId, type) => {
 const getApplianceEnergyUsagesByUser = async(userId, type) => {
     try {
         let usages;
+        if(type == 'daily') {
+            const now = new Date();
+            const startOfToday = startOfDay(now);
+            const endOfToday = endOfDay(now);
+            const dailyUsages = await db.collection('Appliance Energy Usages').where('userId', '==', userId).where('date', '>=', startOfToday).where('date', '<=', endOfToday).get();
+            usages = dailyUsages.docs.map(doc => ({id:doc.id, ...doc.data()}));          
+        }
         if(type == 'weekly') {
             const now = new Date();
             const startOfWeekDate = startOfWeek(now, { weekStartsOn: 1 });

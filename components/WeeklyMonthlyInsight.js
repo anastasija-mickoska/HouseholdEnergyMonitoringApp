@@ -7,6 +7,9 @@ const WeeklyMonthlyInsight = ({title, texts, values}) => {
             <Text style={styles.title}>{title}</Text>
             <Insight title={title} text={texts[0]} value={values[0]} />
             <Insight title={title} text={texts[1]} value={values[1]} />
+            {texts.length > 2 && values.length > 2 && 
+                <Insight title={title} text={texts[2]} value={values[2]}/>
+            }
         </View>
     );
 }

@@ -1,5 +1,5 @@
 const { db } = require('./config/firebaseConfig');
-const { startOfWeek, endOfWeek, format, subWeeks, startOfMonth, endOfMonth, subMonths, isBefore, isEqual } = require('date-fns');
+const { startOfWeek, endOfWeek, format, subWeeks, startOfMonth, endOfMonth, subMonths, isBefore, isEqual, startOfDay, endOfDay, subDays } = require('date-fns');
 
 const getAppliances = async() => {
     try {
@@ -356,6 +356,30 @@ const calculateUsageConsumptionAndCost = async (usage) => {
     }
 };
 
+const getReadingsForHouseholdForFiveDays = async(householdId) => {
+    try {
+        const now = new Date();
+        const startOfToday = startOfDay(now);
+        const startOfFiveDaysAgo = subDays(startOfToday, 6);
+
+        const readings = await db.collection('Electricity Meter Usages')
+            .where('householdId', '==', householdId)
+            .where('date', '>=', startOfFiveDaysAgo)
+            .where('date', '<=', startOfToday)
+            .get();
+
+        const readingsData = readings.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            date: doc.data().date.toDate()
+        })).sort((a, b) => a.date - b.date); 
+
+        return readingsData;
+    } catch (error) {
+        console.error('Error getting readings for household!', error);
+        throw error;
+    }    
+};
 
 const getReadingsForHouseholdForFiveWeeks = async (householdId) => {
     try {
@@ -480,6 +504,179 @@ const calculateMonthlyConsumptionForFiveMonths = async (householdId) => {
     return monthlyConsumptions;
 };
 
+const getDailyElectricityCostAndConsumption = async (householdId) => {
+  try {
+    const now = new Date();
+    const startOfDayDate = startOfDay(now);
+    const endOfDayDate = endOfDay(now);
+    const startOfYesterday = startOfDay(subDays(now, 1));
+    const endOfYesterday = endOfDay(subDays(now, 1));
+
+    const todayUsagesSnapshot = await db.collection('Electricity Meter Usages')
+      .where('householdId', '==', householdId)
+      .where('date', '>=', startOfDayDate)
+      .where('date', '<=', endOfDayDate)
+      .get();
+
+    const todayUsages = todayUsagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    if (todayUsages.length === 0) {
+      return {
+        lowTariffConsumption: '0.00',
+        highTariffConsumption: '0.00',
+        totalCost: '0.00',
+        totalConsumption: '0.00',
+        day: now.getDay(),
+      };
+    }
+
+    let dailyConsumptionLowTariff = 0;
+    let dailyConsumptionHighTariff = 0;
+
+    if (todayUsages.length >= 2) {
+      const lowTariffValues = todayUsages.map(u => parseFloat(u.lowTariff ?? 0));
+      const highTariffValues = todayUsages.map(u => parseFloat(u.highTariff ?? 0));
+      dailyConsumptionLowTariff = Math.abs(Math.max(...lowTariffValues) - Math.min(...lowTariffValues));
+      dailyConsumptionHighTariff = Math.abs(Math.max(...highTariffValues) - Math.min(...highTariffValues));
+    } else {
+      const yesterdayUsagesSnapshot = await db.collection('Electricity Meter Usages')
+        .where('householdId', '==', householdId)
+        .where('date', '>=', startOfYesterday)
+        .where('date', '<=', endOfYesterday)
+        .get();
+      const yesterdayUsages = yesterdayUsagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      if (yesterdayUsages.length === 0) {
+        dailyConsumptionLowTariff = 0;
+        dailyConsumptionHighTariff = 0;
+      } else {
+        const yesterdayLowTariffValues = yesterdayUsages.map(u => parseFloat(u.lowTariff ?? 0));
+        const yesterdayHighTariffValues = yesterdayUsages.map(u => parseFloat(u.highTariff ?? 0));
+        const yesterdayConsumptionLowTariff = Math.max(...yesterdayLowTariffValues);
+        const yesterdayConsumptionHighTariff = Math.max(...yesterdayHighTariffValues);
+        const todayReading = todayUsages[0];
+
+        dailyConsumptionLowTariff = Math.abs((parseFloat(todayReading.lowTariff ?? 0)) - (parseFloat(yesterdayConsumptionLowTariff ?? 0)));
+        dailyConsumptionHighTariff = Math.abs((parseFloat(todayReading.highTariff ?? 0)) - (parseFloat(yesterdayConsumptionHighTariff ?? 0)));
+      }
+    }
+    const prices = await getElectricityPrices();
+    const lowTariffPrice = prices.find(p => p.tariff === 'Low tariff')?.price;
+
+    const blocks = [
+      prices.find(p => p.tariff === 'High Tariff 1'),
+      prices.find(p => p.tariff === 'High Tariff 2'),
+      prices.find(p => p.tariff === 'High Tariff 3'),
+      prices.find(p => p.tariff === 'High Tariff 4')
+    ];
+    const dailyCostLowTariff = dailyConsumptionLowTariff * lowTariffPrice;
+    const monthlyReadings = await getMonthlyReadings(householdId);
+    const firstReadingHighTariffMonthly = monthlyReadings.firstReadingHighTariff;
+    const lastReadingHighTariffMonthly = monthlyReadings.lastReadingHighTariff;
+
+    let remainingDailyConsumption = dailyConsumptionHighTariff;
+    let currentMonthlyConsumption = lastReadingHighTariffMonthly - firstReadingHighTariffMonthly;
+    let startOfDayConsumption = currentMonthlyConsumption - remainingDailyConsumption;
+    let dailyCostHighTariff = 0;
+
+    for (let block of blocks) {
+      if (!block) continue;
+
+      const blockLower = block.lowerLimit;
+      const blockUpper = block.upperLimit;
+      const blockCapacity = blockUpper - Math.max(startOfDayConsumption, blockLower);
+
+      if (blockCapacity <= 0) continue;
+
+      const consumptionInBlock = Math.min(remainingDailyConsumption, blockCapacity);
+      dailyCostHighTariff += consumptionInBlock * block.price;
+
+      startOfDayConsumption += consumptionInBlock;
+      remainingDailyConsumption -= consumptionInBlock;
+
+      if (remainingDailyConsumption <= 0) break;
+    }
+
+    return {
+      lowTariffConsumption: dailyConsumptionLowTariff.toFixed(2),
+      highTariffConsumption: dailyConsumptionHighTariff.toFixed(2),
+      totalCost: (dailyCostHighTariff + dailyCostLowTariff).toFixed(2),
+      totalConsumption: (dailyConsumptionLowTariff + dailyConsumptionHighTariff).toFixed(2),
+      day: now.getDay()
+    };
+
+  } catch (error) {
+    console.error('Error calculating daily electricity cost!', error);
+    throw error;
+  }
+};
+
+const calculateDailyConsumptionForFiveDays = async (householdId) => {
+    const now = new Date();
+    const startOfToday = startOfDay(now);
+    const startOfSixDaysAgo = subDays(startOfToday, 6); 
+
+    const readings = await db.collection('Electricity Meter Usages')
+        .where('householdId', '==', householdId)
+        .where('date', '>=', startOfSixDaysAgo)
+        .where('date', '<=', endOfDay(now))
+        .get();
+
+    const allReadings = readings.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        date: doc.data().date.toDate()
+    }));
+
+  const result = [];
+
+  for (let i = 4; i >= 0; i--) { // last 5 days
+    const dayStart = startOfDay(subDays(new Date(), i));
+    const dayEnd = endOfDay(subDays(new Date(), i));
+    const yesterdayStart = startOfDay(subDays(new Date(), i + 1));
+    const yesterdayEnd = endOfDay(subDays(new Date(), i + 1));
+
+    const todayReadings = allReadings
+      .filter(r => r.date >= dayStart && r.date <= dayEnd);
+
+    let dailyLow = 0;
+    let dailyHigh = 0;
+
+    if (todayReadings.length > 1) {
+      const lowTariffValues = todayReadings.map(r => parseFloat(r.lowTariff ?? 0));
+      const highTariffValues = todayReadings.map(r => parseFloat(r.highTariff ?? 0));
+      dailyLow = Math.abs(Math.max(...lowTariffValues) - Math.min(...lowTariffValues));
+      dailyHigh = Math.abs(Math.max(...highTariffValues) - Math.min(...highTariffValues));
+    } else if (todayReadings.length === 1) {
+      const todayReading = todayReadings[0];
+
+      const yesterdayReadings = allReadings
+        .filter(r => r.date >= yesterdayStart && r.date <= yesterdayEnd);
+
+      let yesterdayLow = 0;
+      let yesterdayHigh = 0;
+
+      if (yesterdayReadings.length > 0) {
+        yesterdayLow = Math.max(...yesterdayReadings.map(r => parseFloat(r.lowTariff ?? 0)));
+        yesterdayHigh = Math.max(...yesterdayReadings.map(r => parseFloat(r.highTariff ?? 0)));        
+        dailyLow = Math.abs(parseFloat(todayReading.lowTariff ?? 0) - yesterdayLow);
+        dailyHigh = Math.abs(parseFloat(todayReading.highTariff ?? 0) - yesterdayHigh);
+      }
+      else if(yesterdayReadings.length == 0) {
+        dailyLow = 0;
+        dailyHigh = 0;
+      }
+    }
+
+    result.push({
+      dayLabel: format(dayStart, 'dd MMM'),
+      consumption: (dailyLow + dailyHigh).toFixed(2)
+    });
+  }
+  console.log('Five days result:',result);
+  return result;
+};
+
 module.exports = {
     calculateTotalApplianceUsage,
     calculateUsageConsumptionAndCost,
@@ -488,5 +685,7 @@ module.exports = {
     getMonthlyElectricityCostAndConsumption,
     getAppliances,
     getElectricityPrices,
-    calculateMonthlyConsumptionForFiveMonths
+    calculateMonthlyConsumptionForFiveMonths,
+    getDailyElectricityCostAndConsumption,
+    calculateDailyConsumptionForFiveDays
 }

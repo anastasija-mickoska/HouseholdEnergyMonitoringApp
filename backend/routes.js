@@ -24,6 +24,8 @@ const {
     getWeeklyElectricityCostAndConsumption,
     getMonthlyElectricityCostAndConsumption,
     getAppliances,
+    getDailyElectricityCostAndConsumption,
+    calculateDailyConsumptionForFiveDays
 } = require('./usagesService');
 const {sendPushNotification, 
   addNotification, 
@@ -114,7 +116,7 @@ router.get('/electricityMeterUsages/:householdId', authenticate, async(req,res)=
 
 router.get('/applianceEnergyUsages', authenticate, async (req, res) => {
   try {
-    const type = req.query.type; //weekly or monthly
+    const type = req.query.type; // daily/weekly/monthly
     if (req.query.householdId) {
       const results = await getApplianceEnergyUsagesForHousehold(req.query.householdId, type);
       res.json(results);
@@ -306,6 +308,18 @@ router.get('/appliances', authenticate, async (req, res) => {
     }
 });
 
+router.get('/dailyElectricityUsage/:householdId', authenticate, async(req,res) => {
+    try {
+        const householdId = req.params.householdId;
+        const data = await getDailyElectricityCostAndConsumption(householdId);
+        res.json(data);
+    }
+    catch (error) {
+        console.error('Error getting daily electricity usage:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 router.get('/weeklyElectricityUsage/:householdId', authenticate, async(req,res) => {
     try {
         const householdId = req.params.householdId;
@@ -350,6 +364,18 @@ router.get('/monthlyApplianceUsage/:userId', authenticate, async(req,res) => {
     }
     catch (error) {
         console.error('Error getting monthly appliance usage for user :', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/previousDaysUsages/:householdId', authenticate, async(req,res) => {
+    try {
+      const householdId = req.params.householdId;
+      const data = await calculateDailyConsumptionForFiveDays(householdId);
+      res.json(data);
+    }
+    catch (error) {
+        console.error('Error getting previous days usages for household :', error);
         res.status(500).json({ error: error.message });
     }
 });

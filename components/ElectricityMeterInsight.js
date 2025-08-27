@@ -5,18 +5,23 @@ import {auth} from '../firebase';
 import {BarChart, PieChart} from 'react-native-gifted-charts';
 
 const ElectricityMeterInsight = () => {
-    const [activePeriod, setActivePeriod] = useState('weekly');
+    const [activePeriod, setActivePeriod] = useState('daily');
     const [weeklyLimit, setWeeklyLimit] = useState(0);
     const [monthlyLimit, setMonthlyLimit] = useState(0);
+    const [dailyUsage, setDailyUsage] = useState(0);
     const [weeklyUsage, setWeeklyUsage] = useState(0);
     const [monthlyUsage, setMonthlyUsage] = useState(0);
+    const [dailyCost, setDailyCost] = useState(0);
     const [weeklyCost, setWeeklyCost] = useState(0);
     const [monthlyCost, setMonthlyCost] = useState(0);    
+    const [lowTariffDaily, setLowTariffDaily] = useState(0);
     const [lowTariffWeekly, setLowTariffWeekly] = useState(0);
     const [lowTariffMonthly, setLowTariffMonthly] = useState(0);
+    const [highTariffDaily, setHighTariffDaily] = useState(0);
     const [highTariffWeekly, setHighTariffWeekly] = useState(0);
     const [highTariffMonthly, setHighTariffMonthly] = useState(0);
     const [data, setData] = useState([]);
+    const [chartDataDaily, setChartDataDaily] = useState([]);
     const [chartDataWeekly, setChartDataWeekly] = useState([]);
     const [chartDataMonthly, setChartDataMonthly] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -39,7 +44,7 @@ const ElectricityMeterInsight = () => {
             }
         }
         loadData();
-    }, [weeklyUsage, monthlyUsage, weeklyLimit, monthlyLimit,activePeriod]);
+    }, [dailyUsage, weeklyUsage, monthlyUsage, weeklyLimit, monthlyLimit,activePeriod]);
 
     const fetchUsageLimits = async(householdId, token) => {
         try {
@@ -64,6 +69,22 @@ const ElectricityMeterInsight = () => {
 
     const fetchElectricityCostAndConsumption = async(householdId, token) => {
         try {
+            const r = await fetch(`http://192.168.1.108:8000/dailyElectricityUsage/${householdId}`, {
+                method:'GET',
+                headers: {
+                    'Authorization':`Bearer ${token}`
+                }
+            });
+            const j = await r.json();
+            if(j.error) {
+                Alert.alert(j.error);
+            }
+            else {
+                setDailyCost(Number(j.totalCost));
+                setDailyUsage(Number(j.totalConsumption));
+                setLowTariffDaily(Number(j.lowTariffConsumption));
+                setHighTariffDaily(Number(j.highTariffConsumption));
+            }
             const res = await fetch(`http://192.168.1.108:8000/weeklyElectricityUsage/${householdId}`, {
                 method:'GET',
                 headers: {
@@ -104,6 +125,23 @@ const ElectricityMeterInsight = () => {
 
     const fetchPreviousConsumption = async(householdId, token) => {
         try {
+            const r = await fetch(`http://192.168.1.108:8000/previousDaysUsages/${householdId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const j = await r.json();
+            if(j.error) {
+                Alert.alert(json.error);
+            }
+            else {
+                setChartDataDaily(j.map((item,index) => ({
+                    value: parseFloat(item.consumption),
+                    label: item.dayLabel,
+                    frontColor: index === j.length - 1 ? '#1F2F98' : '#4ADEDE'
+                })));
+            }
             const res = await fetch(`http://192.168.1.108:8000/previousWeeksUsages/${householdId}`, {
                 method: 'GET',
                 headers: {
@@ -145,8 +183,8 @@ const ElectricityMeterInsight = () => {
     }
 
     const fetchActivePeriodData = async() => {
-        let usage = activePeriod === 'weekly' ? weeklyUsage : monthlyUsage;
-        let limit = activePeriod === 'weekly' ? weeklyLimit : monthlyLimit;
+        let usage = activePeriod === 'daily' ? dailyUsage : (activePeriod === 'weekly' ? weeklyUsage : monthlyUsage);
+        let limit = activePeriod === 'weekly' || activePeriod === 'daily' ? weeklyLimit : monthlyLimit;
 
         if (typeof usage !== 'number' || typeof limit !== 'number') return;
 
@@ -159,6 +197,9 @@ const ElectricityMeterInsight = () => {
         setData(newData);
     };
 
+    const handlePressDaily = () => {
+        setActivePeriod('daily');
+    }
     const handlePressWeekly = () => {
         setActivePeriod('weekly');
     }
@@ -166,16 +207,24 @@ const ElectricityMeterInsight = () => {
         setActivePeriod('monthly');
     }
 
-    const lowTariff = activePeriod === 'weekly' ? lowTariffWeekly : lowTariffMonthly;
-    const highTariff = activePeriod === 'weekly' ? highTariffWeekly : highTariffMonthly;
-    const totalCost = activePeriod === 'weekly' ? weeklyCost : monthlyCost;
-    const barChartData = activePeriod === 'weekly' ? chartDataWeekly : chartDataMonthly;
+    const activePeriodState = {
+    daily: { low: lowTariffDaily, high: highTariffDaily, cost: dailyCost, chart: chartDataDaily },
+    weekly: { low: lowTariffWeekly, high: highTariffWeekly, cost: weeklyCost, chart: chartDataWeekly },
+    monthly: { low: lowTariffMonthly, high: highTariffMonthly, cost: monthlyCost, chart: chartDataMonthly },
+    };
+
+    const { low: lowTariff, high: highTariff, cost: totalCost, chart: barChartData } =
+    activePeriodState[activePeriod] || activePeriodState.weekly; 
+
     const allValuesZeroBarChart = barChartData.every((item) => item.value === 0);
     const allValuesZeroDonutChart = data.every((item) => item.value === 0);
     const maxValue = Math.max(...barChartData.map(item => item.value));
 
-    const desiredNoSections = (maxValue <= 300) ? Math.ceil(maxValue / 50) : Math.ceil(maxValue/100);
+    const desiredNoSections = (maxValue <= 300) ? ((maxValue <= 50) ? Math.ceil(maxValue/10) : Math.ceil(maxValue / 50)) : Math.ceil(maxValue/100);
     let stepValue = 50;
+    if(maxValue < 50) {
+        stepValue = 10;
+    }
     if (stepValue * desiredNoSections < maxValue) {
         stepValue = 100;
     }
@@ -198,16 +247,20 @@ const ElectricityMeterInsight = () => {
                 <>
                     <View style={styles.charts}>
                         <PieChart donut radius={60} innerRadius={45} data={data} isAnimated={true} centerLabelComponent={() => {
-                            if ((activePeriod === 'weekly' && weeklyUsage > 0 && weeklyLimit > 0) ||(activePeriod === 'monthly' && monthlyUsage > 0 && monthlyLimit > 0)) {
-                                const usage = activePeriod === 'weekly' ? weeklyUsage : monthlyUsage;
-                                const limit = activePeriod === 'weekly' ? weeklyLimit : monthlyLimit;
+                            if ((activePeriod === 'daily' && dailyUsage > 0 && weeklyLimit > 0) || (activePeriod === 'weekly' && weeklyUsage > 0 && weeklyLimit > 0) ||(activePeriod === 'monthly' && monthlyUsage > 0 && monthlyLimit > 0)) {
+                                const usage = activePeriod === 'daily' ? dailyUsage : (activePeriod === 'weekly' ? weeklyUsage : monthlyUsage);
+                                const limit = activePeriod === 'weekly' || activePeriod === 'daily' ? weeklyLimit : monthlyLimit;
                                 const percentage = limit > 0 ? (usage / limit) * 100 : 0;
                                 return (
                                     <View style={{ alignItems: 'center' }}>
                                         <Text style={styles.consumption}>
                                             {usage.toLocaleString()} KWh
                                         </Text>
-                                        <Text style={styles.percentage}>{percentage.toFixed(0)}% of limit</Text>
+                                        {activePeriod === 'daily' || activePeriod === 'weekly' ? 
+                                            <Text style={styles.percentage}>{percentage.toFixed(0)}% of weekly limit</Text>
+                                            :
+                                            <Text style={styles.percentage}>{percentage.toFixed(0)}% of monthly limit</Text>
+                                        }
                                     </View>
                                 );
                             }
@@ -249,6 +302,9 @@ const ElectricityMeterInsight = () => {
                 <Text style={styles.buttonText}>No electricity meter data available</Text>
             )}
             <View style={styles.buttons}>
+                <TouchableOpacity style={activePeriod === 'daily' ? styles.active : styles.button} onPress={handlePressDaily}>
+                    <Text style={activePeriod === 'daily' ? styles.activeText : styles.buttonText}>Daily</Text>
+                </TouchableOpacity>
                 <TouchableOpacity style={activePeriod === 'weekly' ? styles.active : styles.button} onPress={handlePressWeekly}>
                     <Text style={activePeriod === 'weekly' ? styles.activeText : styles.buttonText}>Weekly</Text>
                 </TouchableOpacity>
@@ -305,7 +361,7 @@ const styles = StyleSheet.create({
         justifyContent:'space-around',
         flexDirection:'row',
         alignItems:'center',
-        gap:30
+        gap:20
     },
     button: {
         backgroundColor: '#F3F3F3',

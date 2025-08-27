@@ -15,8 +15,10 @@ const AdminHomePage = ({ navigation }) => {
     const [householdName, setHouseholdName] = useState('');
     const [weeklyLimit, setWeeklyLimit] = useState(null);
     const [monthlyLimit, setMonthlyLimit] = useState(null);
+    const [dailyUsage, setDailyUsage] = useState(null);
     const [weeklyUsage, setWeeklyUsage] = useState(null);
     const [monthlyUsage, setMonthlyUsage] = useState(null);
+    const [dailyCost, setDailyCost] = useState(null);
     const [weeklyCost, setWeeklyCost] = useState(null);
     const [monthlyCost, setMonthlyCost] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -101,6 +103,20 @@ const AdminHomePage = ({ navigation }) => {
     
     const fetchElectricityCostAndConsumption = async() => {
         try {
+            const r = await fetch(`http://192.168.1.108:8000/dailyElectricityUsage/${householdId}`, {
+                method:'GET',
+                headers: {
+                    'Authorization':`Bearer ${token}`
+                }
+            });
+            const j = await r.json();
+            if(j.error) {
+                Alert.alert(j.error);
+            }
+            else {
+                setDailyCost(j.totalCost);
+                setDailyUsage(j.totalConsumption);
+            }
             const res = await fetch(`http://192.168.1.108:8000/weeklyElectricityUsage/${householdId}`, {
                 method:'GET',
                 headers: {
@@ -204,8 +220,8 @@ const AdminHomePage = ({ navigation }) => {
                 <View style={styles.household}>
                     <Text style={styles.householdName}>{householdName}</Text> 
                 </View>
-                <UsageComponent week={`${weeklyUsage ?? 0}`} month={`${monthlyUsage ?? 0}`} />
-                <WeeklyMonthlyInsight title={'Electricity Cost'} texts={['This week', 'This month']} values={[`${weeklyCost ?? 0} den`, `${monthlyCost ?? 0} den`]} />
+                <UsageComponent day={`${dailyUsage ?? 0}`} week={`${weeklyUsage ?? 0}`} month={`${monthlyUsage ?? 0}`} />
+                <WeeklyMonthlyInsight title={'Electricity Cost'} texts={['Today','This week', 'This month']} values={[`${dailyCost ?? 0} den`,`${weeklyCost ?? 0} den`, `${monthlyCost ?? 0} den`]} />
                 <CustomButton text={'View Insights'} imgSource={"insights"} onPress={handleInsightsButton} />
                 <WeeklyMonthlyInsight title={'Usage Limits'} texts={['Weekly limit', 'Monthly limit']} values={[
                     `${weeklyLimit ?? 0} KWh`,

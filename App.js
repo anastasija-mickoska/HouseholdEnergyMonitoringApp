@@ -142,7 +142,7 @@ const App = () => {
       try {
         await BackgroundFetch.configure(
           {
-            minimumFetchInterval: 60,
+            minimumFetchInterval: 15,
             stopOnTerminate: false,
             startOnBoot: true,
             enableHeadless: true,

@@ -1,11 +1,15 @@
 import { View, Text, StyleSheet} from 'react-native';
 
 
-const UsageComponent = ({week, month}) => {
+const UsageComponent = ({day, week, month}) => {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Electricity Usage</Text>
             <View style={styles.usage}>
+                <View style={styles.weekMonth}>
+                    <Text style={styles.text}>Today</Text>
+                    <Text style={styles.number}>{day} KWh</Text>
+                </View>
                 <View style={styles.weekMonth}>
                     <Text style={styles.text}>This week</Text>
                     <Text style={styles.number}>{week} KWh</Text>
@@ -40,31 +44,31 @@ const styles=StyleSheet.create({
     },
     usage: {
         flexDirection: 'row',
-        justifyContent:'space-around',
+        justifyContent:'space-between',
         alignItems:'center'
     },
     weekMonth: {
         backgroundColor: '#1CA7EC',
         borderRadius: 20,
         paddingVertical:20,
-        paddingHorizontal:10,
+        paddingHorizontal:5,
         flexDirection:'column',
         justifyContent:'space-evenly',
         alignItems:'center',
         gap:30,
-        marginHorizontal: 10,
+        marginHorizontal:5,
         marginVertical:20
     },
     text: {
         color: '#F3F3F3',
-        fontSize: 16,
+        fontSize: 14,
         fontFamily: 'Roboto Flex',
         fontWeight: '600',
         letterSpacing: 0.8
     },
     number: {
         color: '#FFFFFF',
-        fontSize: 20,
+        fontSize: 16,
         fontFamily: 'Roboto Flex',
         fontWeight: '700',
         letterSpacing: 0.60

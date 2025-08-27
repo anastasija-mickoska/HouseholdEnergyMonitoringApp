@@ -5,13 +5,17 @@ import {auth} from '../firebase';
 import { PieChart } from "react-native-gifted-charts";
 
 const ApplianceUsageInsight = ({title}) => {
-    const [activePeriod, setActivePeriod] = useState('weekly');
+    const [activePeriod, setActivePeriod] = useState('daily');
+    const [applianceBreakdownDaily, setApplianceBreakdownDaily] = useState({});
     const [applianceBreakdownWeekly, setApplianceBreakdownWeekly] = useState({});
     const [applianceBreakdownMonthly, setApplianceBreakdownMonthly] = useState({});  
+    const [totalKWhDaily, setTotalKWhDaily] = useState(0);
     const [totalKWhWeekly, setTotalKWhWeekly] = useState(0);
     const [totalKWhMonthly, setTotalKWhMonthly] = useState(0);
+    const [totalCostDaily, setTotalCostDaily] = useState(0);
     const [totalCostWeekly, setTotalCostWeekly] = useState(0);
     const [totalCostMonthly, setTotalCostMonthly] = useState(0);
+    const [dailyUsage, setDailyUsage] = useState(0);
     const [weeklyUsage, setWeeklyUsage] = useState(0);
     const [monthlyUsage, setMonthlyUsage] = useState(0);
     const [data, setData] =useState([]);
@@ -43,10 +47,16 @@ const ApplianceUsageInsight = ({title}) => {
             }
         };
         loadData();
-    }, [activePeriod, totalKWhMonthly, totalKWhWeekly,weeklyUsage, monthlyUsage]);
+    }, [activePeriod, totalKWhDaily, totalKWhMonthly, totalKWhWeekly, dailyUsage, weeklyUsage, monthlyUsage]);
 
     const fetchDonutChartData = async() => {
-        const newData = activePeriod === 'weekly'
+        const newData = activePeriod === 'daily' ? 
+        [
+            { value: totalKWhDaily, color: '#4ADEDE' },
+            { value: dailyUsage - totalKWhDaily, color: '#E0E0E0' },
+            ] 
+        :
+        (activePeriod === 'weekly'
         ? [
             { value: totalKWhWeekly, color: '#4ADEDE' },
             { value: weeklyUsage - totalKWhWeekly, color: '#E0E0E0' },
@@ -54,12 +64,12 @@ const ApplianceUsageInsight = ({title}) => {
         : [
             { value: totalKWhMonthly, color: '#4ADEDE' },
             { value: monthlyUsage - totalKWhMonthly, color: '#E0E0E0' },
-            ];
+            ]);
         setData(newData);
     };
 
     const fetchPieChartData = async() => {
-        const breakdown = activePeriod === 'weekly' ? applianceBreakdownWeekly : applianceBreakdownMonthly;
+        const breakdown = activePeriod === 'daily' ? applianceBreakdownDaily : (activePeriod === 'weekly' ? applianceBreakdownWeekly : applianceBreakdownMonthly);
         const colors = ['#4ADEDE', '#1AA7EC', '#1F2F98', '#055B5C', '#7FFFD4', '#289C8E'];
 
         const pieChartData = Object.entries(breakdown).map(([appliance, data], index) => ({
@@ -73,6 +83,21 @@ const ApplianceUsageInsight = ({title}) => {
 
     const fetchApplianceUsageForHousehold = async(householdId, token) => {
         try {
+            const r = await fetch(`http://192.168.1.108:8000/applianceEnergyUsages?householdId=${householdId}&type=daily`, {
+                method:'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const j = await r.json();
+            if(j.error) {
+                Alert.alert(j.error);
+            }
+            else {
+                setTotalKWhDaily(Number(j.totalKWh));
+                setTotalCostDaily(Number(j.totalCost));
+                setApplianceBreakdownDaily(j.applianceBreakdown);
+            }
             const res = await fetch(`http://192.168.1.108:8000/applianceEnergyUsages?householdId=${householdId}&type=weekly`, {
                 method:'GET',
                 headers: {
@@ -112,6 +137,21 @@ const ApplianceUsageInsight = ({title}) => {
 
     const fetchApplianceUsageForUser = async(userId, token) => {
         try {
+            const r = await fetch(`http://192.168.1.108:8000/applianceEnergyUsages?userId=${userId}&type=daily`, {
+                method:'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const j = await r.json();
+            if(j.error) {
+                Alert.alert(j.error);
+            }
+            else {
+                setTotalKWhDaily(Number(j.totalKWh));
+                setTotalCostDaily(Number(j.totalCost));
+                setApplianceBreakdownDaily(j.applianceBreakdown);
+            }
             const res = await fetch(`http://192.168.1.108:8000/applianceEnergyUsages?userId=${userId}&type=weekly`, {
                 method:'GET',
                 headers: {
@@ -151,6 +191,19 @@ const ApplianceUsageInsight = ({title}) => {
 
     const fetchElectricityCostAndConsumption = async(householdId, token) => {
         try {
+            const r = await fetch(`http://192.168.1.108:8000/dailyElectricityUsage/${householdId}`, {
+                method:'GET',
+                headers: {
+                    'Authorization':`Bearer ${token}`
+                }
+            });
+            const j = await r.json();
+            if(j.error) {
+                Alert.alert(j.error);
+            }
+            else {
+                setDailyUsage(Number(j.totalConsumption));
+            }
             const res = await fetch(`http://192.168.1.108:8000/weeklyElectricityUsage/${householdId}`, {
                 method:'GET',
                 headers: {
@@ -183,6 +236,9 @@ const ApplianceUsageInsight = ({title}) => {
         }
     };
 
+    const handlePressDaily = () => {
+        setActivePeriod('daily');
+    }
     const handlePressWeekly = () => {
         setActivePeriod('weekly');
     }
@@ -198,7 +254,7 @@ const ApplianceUsageInsight = ({title}) => {
             </View>
         )
     }
-    const totalCost = activePeriod == 'weekly' ? totalCostWeekly : totalCostMonthly;
+    const totalCost = activePeriod === 'daily' ? totalCostDaily : (activePeriod == 'weekly' ? totalCostWeekly : totalCostMonthly);
 
     return(
         <View style={styles.container}>
@@ -207,6 +263,7 @@ const ApplianceUsageInsight = ({title}) => {
                 {data.length > 0 && 
                     <PieChart donut radius={60} innerRadius={45} data={data} isAnimated={true} centerLabelComponent={() => {
                     const values = [
+                    dailyUsage ?? 0,
                     weeklyUsage ?? 0,
                     monthlyUsage ?? 0,
                     totalKWhWeekly ?? 0,
@@ -214,8 +271,8 @@ const ApplianceUsageInsight = ({title}) => {
                     ];
 
                     if (values.some(v => v !== 0)) {
-                    const usage = activePeriod === 'weekly' ? (weeklyUsage ?? 1) : (monthlyUsage ?? 1);
-                    const totalKWh = activePeriod === 'weekly' ? (totalKWhWeekly ?? 0) : (totalKWhMonthly ?? 0);
+                    const usage = activePeriod === 'daily' ? (dailyUsage ?? 1) : (activePeriod === 'weekly' ? (weeklyUsage ?? 1) : (monthlyUsage ?? 1));
+                    const totalKWh = activePeriod === 'daily' ? (totalKWhDaily ?? 0) : (activePeriod === 'weekly' ? (totalKWhWeekly ?? 0) : (totalKWhMonthly ?? 0));
                     const percentage = ((totalKWh / usage) * 100) || 0;
 
                     return (
@@ -257,6 +314,9 @@ const ApplianceUsageInsight = ({title}) => {
             )}
             </View>
             <View style={styles.buttons}>
+                <TouchableOpacity style={activePeriod === 'daily' ? styles.active : styles.button} onPress={handlePressDaily}>
+                    <Text style={activePeriod === 'daily' ? styles.activeText : styles.buttonText}>Daily</Text>
+                </TouchableOpacity>
                 <TouchableOpacity style={activePeriod === 'weekly' ? styles.active : styles.button} onPress={handlePressWeekly}>
                     <Text style={activePeriod === 'weekly' ? styles.activeText : styles.buttonText}>Weekly</Text>
                 </TouchableOpacity>
@@ -321,7 +381,7 @@ const styles = StyleSheet.create({
         justifyContent:'space-around',
         flexDirection:'row',
         alignItems:'center',
-        gap:30
+        gap:20
     },
     button: {
         backgroundColor: '#F3F3F3',
