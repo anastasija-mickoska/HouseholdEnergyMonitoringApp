@@ -31,7 +31,8 @@ const {sendPushNotification,
   addNotification, 
   getNotificationsForHousehold, 
   setUserFcmToken,
-  checkEntriesAndNotify
+  checkEntriesAndNotify,
+  deleteNotification
   } = require('./notificationsService');
 const authenticate = require('./config/auth');
 const { Timestamp } = require('firebase-admin/firestore');
@@ -153,6 +154,7 @@ router.post('/electricityMeterUsages', authenticate, async(req,res)=> {
 
     const users = await getUsersForHousehold(householdId);
     const tokens = users.map(user => user.fcmToken).filter(Boolean);
+    const uniqueTokens = [...new Set(tokens)]; 
 
     const startWeek = format(weeklyUsageData.startOfWeek, 'MMMM dd');
     const endWeek = format(weeklyUsageData.endOfWeek, 'MMMM dd');
@@ -186,7 +188,7 @@ router.post('/electricityMeterUsages', authenticate, async(req,res)=> {
       }
       const validTokens = [];
 
-      for (const token of tokens) {
+      for (const token of uniqueTokens) {
         const result = await sendPushNotification(token, 'Warning', message, {
           sentAt: new Date().toISOString()
         });
@@ -195,7 +197,7 @@ router.post('/electricityMeterUsages', authenticate, async(req,res)=> {
         }
       }
       if (validTokens.length > 0) {
-        await addNotification(householdId, validTokens, 'Warning', message);
+          await addNotification(householdId, validTokens, 'Warning', message);
       }
     }
     res.status(201).json({message:'Electricity meter usage added.', totalKWh: returnData.totalKWh, totalCost: returnData.totalCost});
@@ -237,6 +239,7 @@ router.patch('/households/:householdId/limits', authenticate, async(req, res) =>
 
     const users = await getUsersForHousehold(householdId);
     const tokens = users.map(user => user.fcmToken).filter(Boolean);
+    const uniqueTokens = [...new Set(tokens)]; 
 
     const startWeek = format(weeklyUsageData.startOfWeek, 'MMMM dd');
     const endWeek = format(weeklyUsageData.endOfWeek, 'MMMM dd');
@@ -268,7 +271,7 @@ router.patch('/households/:householdId/limits', authenticate, async(req, res) =>
       }
       const validTokens = [];
 
-      for (const token of tokens) {
+      for (const token of uniqueTokens) {
         const result = await sendPushNotification(token, 'Warning', message, {
           sentAt: new Date().toISOString()
         });
@@ -277,9 +280,23 @@ router.patch('/households/:householdId/limits', authenticate, async(req, res) =>
         }
       }
       if (validTokens.length > 0) {
-        await addNotification(householdId, validTokens, 'Warning', message);
+          await addNotification(householdId, validTokens, 'Warning', message);
       }
     }
+
+    if (weeklyUsage < 0.8 * Number(weeklyLimit) && sentNotificationsText.includes(`80% of the weekly household limit for period ${startWeek} - ${endWeek} reached!`)) {
+        await deleteNotification(householdId, `80% of the weekly household limit for period ${startWeek} - ${endWeek} reached!`);
+    }
+    if (weeklyUsage < Number(weeklyLimit) && sentNotificationsText.includes(`Weekly household limit for period ${startWeek} - ${endWeek} reached!`)) {
+        await deleteNotification(householdId, `Weekly household limit for period ${startWeek} - ${endWeek} reached!`);
+    }
+    if (monthlyUsage < 0.8 * Number(monthlyLimit) && sentNotificationsText.includes(`80% of the monthly household limit for ${month} reached!`)) {
+        await deleteNotification(householdId, `80% of the monthly household limit for ${month} reached!`);
+    }
+    if (monthlyUsage < Number(monthlyLimit) && sentNotificationsText.includes(`Monthly household limit for ${month} reached!`)) {
+        await deleteNotification(householdId, `Monthly household limit for ${month} reached!`);
+    }
+    
     res.status(200).json({message: 'Limits saved.'});
   }
   catch(error){
@@ -409,8 +426,9 @@ router.post('/notifications/:householdId', authenticate, async(req,res) => {
         const householdId = req.params.householdId;
         const users = await getUsersForHousehold(householdId);
         const tokens = users.map(user => user.fcmToken).filter(Boolean);
+        const uniqueTokens = [...new Set(tokens)];
 
-        await checkEntriesAndNotify(householdId, tokens, "Reminder", "Don't forget to log electricity meter data today!")
+        await checkEntriesAndNotify(householdId, uniqueTokens, "Reminder", "Don't forget to log electricity meter data today!")
         res.status(200).json({message:'Notifications sent successfully.'});
     }
     catch (error) {

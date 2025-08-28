@@ -31,7 +31,7 @@ const WelcomePage = ({ navigation }) => {
 
   const fetchUserName = async() => {
       try {
-          const res = await fetch(`http://192.168.1.108:8000/users/${userId}`, {
+          const res = await fetch(`https://household-energy-backend.ey.r.appspot.com/users/${userId}`, {
               method:'GET',
               headers: {
                   'Authorization':`Bearer ${token}`

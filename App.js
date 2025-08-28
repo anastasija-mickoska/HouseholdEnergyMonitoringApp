@@ -24,14 +24,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import notifee, { AndroidImportance } from '@notifee/react-native';
 import BackgroundFetch from 'react-native-background-fetch';
 import {auth} from './firebase';
-import { signOut } from 'firebase/auth';
+//import { signOut } from 'firebase/auth';
 
 const Stack = createNativeStackNavigator();
 
 SplashScreen.preventAutoHideAsync();
 
 const sendTokenToBackend = async (userId, fcmToken, token) => {
-  const res = await fetch(`http://192.168.1.108:8000/users/${userId}`, {
+  const res = await fetch(`https://household-energy-backend.ey.r.appspot.com/users/${userId}`, {
     method: 'PATCH',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -47,7 +47,7 @@ const sendTokenToBackend = async (userId, fcmToken, token) => {
 
 const App = () => {
   const [fontsLoaded, setFontsLoaded] = useState(false);
-  const appState = useRef(AppState.currentState);
+//  const appState = useRef(AppState.currentState);
   const navigationRef = useNavigationContainerRef();
 
   useEffect(() => {
@@ -153,7 +153,7 @@ const App = () => {
               const householdId = await AsyncStorage.getItem('householdId');
               const token = await auth.currentUser.getIdToken();
               console.log('Background notification task fetched now');
-              const res = await fetch(`http://192.168.1.108:8000/notifications/${householdId}`, {
+              const res = await fetch(`https://household-energy-backend.ey.r.appspot.com/notifications/${householdId}`, {
                 method: 'POST',
                 headers: {
                   'Authorization': `Bearer ${token}`,
@@ -182,52 +182,52 @@ const App = () => {
     initBackgroundFetch();
   }, []);
 
-  useEffect(() => {
-    const handleAppStateChange = async (nextAppState) => {
-      if (
-        appState.current === 'active' &&
-        (nextAppState === 'background' || nextAppState === 'inactive')
-      ) {
-        const timestamp = Date.now().toString();
-        try {
-          await AsyncStorage.setItem('lastActiveTime', timestamp);
-          console.log('Saved timestamp:', timestamp);
-        } catch (err) {
-          console.warn('Failed to save timestamp', err);
-        }
-      }
-      if (nextAppState === 'active') {
-        const lastActiveStr = await AsyncStorage.getItem('lastActiveTime');
-        if (lastActiveStr) {
-          const lastActiveTime = parseInt(lastActiveStr, 10);
-          const now = Date.now();
-          const diffMinutes = (now - lastActiveTime) / 1000 / 60;
+  // useEffect(() => {
+  //   const handleAppStateChange = async (nextAppState) => {
+  //     if (
+  //       appState.current === 'active' &&
+  //       (nextAppState === 'background' || nextAppState === 'inactive')
+  //     ) {
+  //       const timestamp = Date.now().toString();
+  //       try {
+  //         await AsyncStorage.setItem('lastActiveTime', timestamp);
+  //         console.log('Saved timestamp:', timestamp);
+  //       } catch (err) {
+  //         console.warn('Failed to save timestamp', err);
+  //       }
+  //     }
+  //     if (nextAppState === 'active') {
+  //       const lastActiveStr = await AsyncStorage.getItem('lastActiveTime');
+  //       if (lastActiveStr) {
+  //         const lastActiveTime = parseInt(lastActiveStr, 10);
+  //         const now = Date.now();
+  //         const diffMinutes = (now - lastActiveTime) / 1000 / 60;
 
-          if (diffMinutes >= 360) {
-            try {
-              await signOut(auth);
-              await AsyncStorage.clear();
-              if (navigationRef.isReady()) {
-                navigationRef.reset({
-                  index: 0,
-                  routes: [{ name: 'Login' }],
-                });
-              }
-            } catch (error) {
-              console.error('Auto logout error:', error);
-            }
-          }
-        }
-      }
+  //         if (diffMinutes >= 360) {
+  //           try {
+  //             await signOut(auth);
+  //             await AsyncStorage.clear();
+  //             if (navigationRef.isReady()) {
+  //               navigationRef.reset({
+  //                 index: 0,
+  //                 routes: [{ name: 'Login' }],
+  //               });
+  //             }
+  //           } catch (error) {
+  //             console.error('Auto logout error:', error);
+  //           }
+  //         }
+  //       }
+  //     }
 
-      appState.current = nextAppState;
-    };
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
+  //     appState.current = nextAppState;
+  //   };
+  //   const subscription = AppState.addEventListener('change', handleAppStateChange);
 
-    return () => {
-      subscription.remove();
-    };
-  }, []);
+  //   return () => {
+  //     subscription.remove();
+  //   };
+  // }, []);
 
 
   const onLayoutRootView = useCallback(async () => {

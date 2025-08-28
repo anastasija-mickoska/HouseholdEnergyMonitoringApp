@@ -39,7 +39,7 @@ const NotificationsList = ({ navigation }) => {
 
     const fetchNotifications = async (token, householdId) => {
         try {
-            const res = await fetch(`http://192.168.1.108:8000/notifications/${householdId}`, {
+            const res = await fetch(`https://household-energy-backend.ey.r.appspot.com/notifications/${householdId}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`

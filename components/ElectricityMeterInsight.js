@@ -48,7 +48,7 @@ const ElectricityMeterInsight = () => {
 
     const fetchUsageLimits = async(householdId, token) => {
         try {
-            const res = await fetch(`http://192.168.1.108:8000/households/${householdId}`, {
+            const res = await fetch(`https://household-energy-backend.ey.r.appspot.com/households/${householdId}`, {
                 method:'GET',
                 headers: {
                     'Authorization':`Bearer ${token}`
@@ -69,7 +69,7 @@ const ElectricityMeterInsight = () => {
 
     const fetchElectricityCostAndConsumption = async(householdId, token) => {
         try {
-            const r = await fetch(`http://192.168.1.108:8000/dailyElectricityUsage/${householdId}`, {
+            const r = await fetch(`https://household-energy-backend.ey.r.appspot.com/dailyElectricityUsage/${householdId}`, {
                 method:'GET',
                 headers: {
                     'Authorization':`Bearer ${token}`
@@ -85,7 +85,7 @@ const ElectricityMeterInsight = () => {
                 setLowTariffDaily(Number(j.lowTariffConsumption));
                 setHighTariffDaily(Number(j.highTariffConsumption));
             }
-            const res = await fetch(`http://192.168.1.108:8000/weeklyElectricityUsage/${householdId}`, {
+            const res = await fetch(`https://household-energy-backend.ey.r.appspot.com/weeklyElectricityUsage/${householdId}`, {
                 method:'GET',
                 headers: {
                     'Authorization':`Bearer ${token}`
@@ -101,7 +101,7 @@ const ElectricityMeterInsight = () => {
                 setLowTariffWeekly(Number(json.lowTariffConsumption));
                 setHighTariffWeekly(Number(json.highTariffConsumption));
             }
-            const result = await fetch(`http://192.168.1.108:8000/monthlyElectricityUsage/${householdId}`, {
+            const result = await fetch(`https://household-energy-backend.ey.r.appspot.com/monthlyElectricityUsage/${householdId}`, {
                 method:'GET',
                 headers: {
                     'Authorization':`Bearer ${token}`
@@ -125,7 +125,7 @@ const ElectricityMeterInsight = () => {
 
     const fetchPreviousConsumption = async(householdId, token) => {
         try {
-            const r = await fetch(`http://192.168.1.108:8000/previousDaysUsages/${householdId}`, {
+            const r = await fetch(`https://household-energy-backend.ey.r.appspot.com/previousDaysUsages/${householdId}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -142,7 +142,7 @@ const ElectricityMeterInsight = () => {
                     frontColor: index === j.length - 1 ? '#1F2F98' : '#4ADEDE'
                 })));
             }
-            const res = await fetch(`http://192.168.1.108:8000/previousWeeksUsages/${householdId}`, {
+            const res = await fetch(`https://household-energy-backend.ey.r.appspot.com/previousWeeksUsages/${householdId}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -159,7 +159,7 @@ const ElectricityMeterInsight = () => {
                     frontColor: index === json.length - 1 ? '#1F2F98' : '#4ADEDE'
                 })));
             }
-            const result = await fetch(`http://192.168.1.108:8000/previousMonthsUsages/${householdId}`, {
+            const result = await fetch(`https://household-energy-backend.ey.r.appspot.com/previousMonthsUsages/${householdId}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`

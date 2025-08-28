@@ -19,7 +19,7 @@ const BackgroundTask = async (taskId) => {
       BackgroundFetch.finish(taskId);
       return;
     }
-    await fetch(`http://192.168.1.108:8000/notifications/${householdId}`, {
+    await fetch(`https://household-energy-backend.ey.r.appspot.com/notifications/${householdId}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,

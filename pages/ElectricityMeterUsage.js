@@ -43,7 +43,7 @@ const ElectricityMeterUsage = ({navigation}) => {
             lowTariff: Number(lowTariff),
             date: new Date(electricityMeterSubmitDate),
           };
-          const res = await fetch('http://192.168.1.108:8000/electricityMeterUsages', {
+          const res = await fetch('https://household-energy-backend.ey.r.appspot.com/electricityMeterUsages', {
             method:'POST',
             headers: {
               'Authorization': `Bearer ${token}`,

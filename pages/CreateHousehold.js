@@ -35,7 +35,7 @@ const CreateHousehold = ({navigation}) => {
         monthlyLimit: null,
       };
 
-      const res = await fetch('http://192.168.1.108:8000/households', {
+      const res = await fetch('https://household-energy-backend.ey.r.appspot.com/households', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -47,7 +47,7 @@ const CreateHousehold = ({navigation}) => {
 
       if (json.message === 'Household created.' && json.householdId) {
         await AsyncStorage.setItem('householdId',json.householdId);
-        const result = await fetch(`http://192.168.1.108:8000/users/${userId}`, {
+        const result = await fetch(`https://household-energy-backend.ey.r.appspot.com/users/${userId}`, {
           method: 'PATCH',
           headers: {
             'Authorization': `Bearer ${token}`,

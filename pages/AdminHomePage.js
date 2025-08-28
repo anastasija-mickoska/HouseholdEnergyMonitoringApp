@@ -28,6 +28,7 @@ const AdminHomePage = ({ navigation }) => {
             const storedHouseholdId = await AsyncStorage.getItem('householdId');
             const storedUserId = await AsyncStorage.getItem('id');
             const fetchedToken = await auth.currentUser.getIdToken();
+            console.log('User Token:', fetchedToken);
 
             setHouseholdId(storedHouseholdId);
             setUserId(storedUserId);
@@ -60,7 +61,7 @@ const AdminHomePage = ({ navigation }) => {
 
     const fetchUserName = async() => {
         try {
-            const res = await fetch(`http://192.168.1.108:8000/users/${userId}`, {
+            const res = await fetch(`https://household-energy-backend.ey.r.appspot.com/users/${userId}`, {
                 method:'GET',
                 headers: {
                     'Authorization':`Bearer ${token}`
@@ -81,7 +82,7 @@ const AdminHomePage = ({ navigation }) => {
 
     const fetchUsageLimits = async() => {
         try {
-            const res = await fetch(`http://192.168.1.108:8000/households/${householdId}`, {
+            const res = await fetch(`https://household-energy-backend.ey.r.appspot.com/households/${householdId}`, {
                 method:'GET',
                 headers: {
                     'Authorization':`Bearer ${token}`
@@ -103,7 +104,7 @@ const AdminHomePage = ({ navigation }) => {
     
     const fetchElectricityCostAndConsumption = async() => {
         try {
-            const r = await fetch(`http://192.168.1.108:8000/dailyElectricityUsage/${householdId}`, {
+            const r = await fetch(`https://household-energy-backend.ey.r.appspot.com/dailyElectricityUsage/${householdId}`, {
                 method:'GET',
                 headers: {
                     'Authorization':`Bearer ${token}`
@@ -117,7 +118,7 @@ const AdminHomePage = ({ navigation }) => {
                 setDailyCost(j.totalCost);
                 setDailyUsage(j.totalConsumption);
             }
-            const res = await fetch(`http://192.168.1.108:8000/weeklyElectricityUsage/${householdId}`, {
+            const res = await fetch(`https://household-energy-backend.ey.r.appspot.com/weeklyElectricityUsage/${householdId}`, {
                 method:'GET',
                 headers: {
                     'Authorization':`Bearer ${token}`
@@ -131,7 +132,7 @@ const AdminHomePage = ({ navigation }) => {
                 setWeeklyCost(json.totalCost);
                 setWeeklyUsage(json.totalConsumption);
             }
-            const result = await fetch(`http://192.168.1.108:8000/monthlyElectricityUsage/${householdId}`, {
+            const result = await fetch(`https://household-energy-backend.ey.r.appspot.com/monthlyElectricityUsage/${householdId}`, {
                 method:'GET',
                 headers: {
                     'Authorization':`Bearer ${token}`
@@ -153,7 +154,7 @@ const AdminHomePage = ({ navigation }) => {
 
     const deleteHousehold = async() => {
         try {
-            const res = await fetch(`http://192.168.1.108:8000/households/${householdId}`, {
+            const res = await fetch(`https://household-energy-backend.ey.r.appspot.com/households/${householdId}`, {
                 method:'DELETE',
                 headers: {
                     'Authorization':`Bearer ${token}`

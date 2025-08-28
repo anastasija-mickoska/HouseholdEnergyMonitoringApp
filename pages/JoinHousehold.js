@@ -30,7 +30,7 @@ const JoinHousehold = ({navigation}) => {
           householdCode,
         };
         const encoded = encodeURIComponent(householdName);
-        const res = await fetch(`http://192.168.1.108:8000/households/${encoded}`, {
+        const res = await fetch(`https://household-energy-backend.ey.r.appspot.com/households/${encoded}`, {
           method:'PATCH',
           headers: {
             'Authorization': `Bearer ${token}`,

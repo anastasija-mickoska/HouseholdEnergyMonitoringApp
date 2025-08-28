@@ -29,7 +29,7 @@ const ManageUsageLimits = ({navigation}) => {
     useEffect(() => { 
         const fetchUsageLimits = async () => {
             try {
-                const res = await fetch(`http://192.168.1.108:8000/households/${householdId}`, {
+                const res = await fetch(`https://household-energy-backend.ey.r.appspot.com/households/${householdId}`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -56,7 +56,7 @@ const ManageUsageLimits = ({navigation}) => {
         setWeeklyLimit(newLimits.weeklyLimit.toString());
         setMonthlyLimit(newLimits.monthlyLimit.toString());
         try {
-            const res = await fetch(`http://192.168.1.108:8000/households/${householdId}/limits`, {
+            const res = await fetch(`https://household-energy-backend.ey.r.appspot.com/households/${householdId}/limits`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`,

@@ -26,7 +26,7 @@ const ApplianceEnergyUsage = ({ navigation }) => {
             setHouseholdId(storedHouseholdId);
             setRole(storedRole);
             setToken(fetchedtoken);
-            const res = await fetch('http://192.168.1.108:8000/appliances', {
+            const res = await fetch('https://household-energy-backend.ey.r.appspot.com/appliances', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${fetchedtoken}`,
@@ -36,7 +36,11 @@ const ApplianceEnergyUsage = ({ navigation }) => {
                 throw new Error('Failed to fetch appliances.');
             }
             const json = await res.json();
-            setAppliances(json.map(item => ({ label: item.applianceName, value: item.applianceName })));
+            const applianceOptions = [
+                { label: "Select appliance from below:", value: "" }, 
+                ...json.map(item => ({ label: item.applianceName, value: item.applianceName }))
+            ];
+            setAppliances(applianceOptions);
         };
         loadData();
     }, []);
@@ -58,7 +62,7 @@ const ApplianceEnergyUsage = ({ navigation }) => {
                 date: new Date(date),
                 startingTime: startingDateTime 
             };
-            const res = await fetch('http://192.168.1.108:8000/applianceEnergyUsages', {
+            const res = await fetch('https://household-energy-backend.ey.r.appspot.com/applianceEnergyUsages', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -96,7 +100,7 @@ const ApplianceEnergyUsage = ({ navigation }) => {
                     title="Appliance Energy Usage Data"
                     registerQuestion={false}
                     fields={[
-                        { name: 'appliance', label: 'Appliance', type: 'picker', options: appliances, placeholder: "Select appliance from below:", required: true },
+                        { name: 'appliance', label: 'Appliance', type: 'picker', options: appliances, required: true },
                         { name: 'timeDuration', label: 'Time (hours)', type: 'number', placeholder: "Time (hours)", required: true },
                         { name: 'date', label: 'Date', type: 'date', placeholder: "Date:", required: true },
                         { name: 'startingTime', label: 'Starting time', type: 'time', placeholder: "Starting time:", required: true },

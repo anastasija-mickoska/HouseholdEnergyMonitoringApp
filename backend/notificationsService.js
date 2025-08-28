@@ -99,11 +99,27 @@ const checkEntriesAndNotify = async (householdId, tokens, title, body) => {
   }
 };
 
+const deleteNotification = async(householdId, message) => {
+    try {
+        const snapshot = await db.collection('Notifications').where('householdId', '==', householdId).where('notification', '==', message).get();
+        if (snapshot.empty) {
+          console.log('No matching notifications found.');
+          return;
+        }
+        for (const doc of snapshot.docs) {
+          await db.collection('Notifications').doc(doc.id).delete();
+        }
+    } catch(error) {
+        console.error('Error deleting notification from database!', error);
+        throw error;
+    }  
+};
 
 module.exports = {
     sendPushNotification,
     addNotification,
     getNotificationsForHousehold,
     setUserFcmToken,
-    checkEntriesAndNotify
+    checkEntriesAndNotify,
+    deleteNotification
 };
