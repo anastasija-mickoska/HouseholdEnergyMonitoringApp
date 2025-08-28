@@ -28,8 +28,6 @@ const AdminHomePage = ({ navigation }) => {
             const storedHouseholdId = await AsyncStorage.getItem('householdId');
             const storedUserId = await AsyncStorage.getItem('id');
             const fetchedToken = await auth.currentUser.getIdToken();
-            console.log('User Token:', fetchedToken);
-
             setHouseholdId(storedHouseholdId);
             setUserId(storedUserId);
             setToken(fetchedToken);

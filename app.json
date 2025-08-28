@@ -4,7 +4,7 @@
     "slug": "HouseholdEnergyMonitoringApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
+    "icon": "./assets/images/app_logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "extra": {
@@ -36,7 +36,7 @@
       "package": "com.anastasija_m.HouseholdEnergyMonitoringApp"
     },
     "web": {
-      "favicon": "./assets/images/logo.png"
+      "favicon": "./assets/images/app_logo.png"
     },
     "scheme": "householdenergy",
     "plugins": [
