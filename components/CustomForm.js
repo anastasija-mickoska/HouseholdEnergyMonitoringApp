@@ -27,11 +27,11 @@ const CustomForm = ({title, registerQuestion, fields, buttonText, buttonIcon, on
         const fieldType = fields.find(f => f.name === name)?.type;
 
         if (fieldType === 'date') {
-            handleChange(name, selectedDate.toISOString().split('T')[0]); // YYYY-MM-DD
+            handleChange(name, selectedDate.toISOString().split('T')[0]);
         } else if (fieldType === 'time') {
             const hours = selectedDate.getHours().toString().padStart(2, '0');
             const minutes = selectedDate.getMinutes().toString().padStart(2, '0');
-            handleChange(name, `${hours}:${minutes}`); // Store only HH:MM
+            handleChange(name, `${hours}:${minutes}`);
         }
     };
 

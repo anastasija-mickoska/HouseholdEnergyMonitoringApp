@@ -18,13 +18,12 @@ import { NavigationContainer, useNavigationContainerRef } from '@react-navigatio
 import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { View, StatusBar, Alert, AppState } from 'react-native';
+import { View, StatusBar, Alert } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import notifee, { AndroidImportance } from '@notifee/react-native';
 import BackgroundFetch from 'react-native-background-fetch';
 import {auth} from './firebase';
-//import { signOut } from 'firebase/auth';
 
 const Stack = createNativeStackNavigator();
 
@@ -47,7 +46,6 @@ const sendTokenToBackend = async (userId, fcmToken, token) => {
 
 const App = () => {
   const [fontsLoaded, setFontsLoaded] = useState(false);
-//  const appState = useRef(AppState.currentState);
   const navigationRef = useNavigationContainerRef();
 
   useEffect(() => {
@@ -142,7 +140,7 @@ const App = () => {
       try {
         await BackgroundFetch.configure(
           {
-            minimumFetchInterval: 15,
+            minimumFetchInterval: 60,
             stopOnTerminate: false,
             startOnBoot: true,
             enableHeadless: true,
@@ -181,54 +179,6 @@ const App = () => {
 
     initBackgroundFetch();
   }, []);
-
-  // useEffect(() => {
-  //   const handleAppStateChange = async (nextAppState) => {
-  //     if (
-  //       appState.current === 'active' &&
-  //       (nextAppState === 'background' || nextAppState === 'inactive')
-  //     ) {
-  //       const timestamp = Date.now().toString();
-  //       try {
-  //         await AsyncStorage.setItem('lastActiveTime', timestamp);
-  //         console.log('Saved timestamp:', timestamp);
-  //       } catch (err) {
-  //         console.warn('Failed to save timestamp', err);
-  //       }
-  //     }
-  //     if (nextAppState === 'active') {
-  //       const lastActiveStr = await AsyncStorage.getItem('lastActiveTime');
-  //       if (lastActiveStr) {
-  //         const lastActiveTime = parseInt(lastActiveStr, 10);
-  //         const now = Date.now();
-  //         const diffMinutes = (now - lastActiveTime) / 1000 / 60;
-
-  //         if (diffMinutes >= 360) {
-  //           try {
-  //             await signOut(auth);
-  //             await AsyncStorage.clear();
-  //             if (navigationRef.isReady()) {
-  //               navigationRef.reset({
-  //                 index: 0,
-  //                 routes: [{ name: 'Login' }],
-  //               });
-  //             }
-  //           } catch (error) {
-  //             console.error('Auto logout error:', error);
-  //           }
-  //         }
-  //       }
-  //     }
-
-  //     appState.current = nextAppState;
-  //   };
-  //   const subscription = AppState.addEventListener('change', handleAppStateChange);
-
-  //   return () => {
-  //     subscription.remove();
-  //   };
-  // }, []);
-
 
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {
